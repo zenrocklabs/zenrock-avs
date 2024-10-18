@@ -10,43 +10,71 @@ import (
 	"crypto/ecdsa"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	eigenSdkTypes "github.com/Layr-Labs/eigensdk-go/types"
 
-	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	avs "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
 )
 
 func (o *Operator) registerOperatorOnStartup(
 	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
-	mockTokenStrategyAddr common.Address,
+	tokenStrategyAddr common.Address,
 ) {
-	err := o.RegisterOperatorWithEigenlayer()
-	if err != nil {
+	if err := o.RegisterOperatorWithEigenlayer(); err != nil {
 		// This error might only be that the operator was already registered with eigenlayer, so we don't want to fatal
 		o.logger.Error("Error registering operator with eigenlayer", "err", err)
 	} else {
 		o.logger.Infof("Registered operator with eigenlayer")
 	}
 
-	// TODO(samlaf): shouldn't hardcode number here
-	amount := big.NewInt(1000)
-	err = o.DepositIntoStrategy(mockTokenStrategyAddr, amount)
-	if err != nil {
+	// TODO: shouldn't hardcode value here
+	amount := big.NewInt(100000000000000000)
+	if err := o.DepositIntoStrategy(tokenStrategyAddr, amount); err != nil {
 		o.logger.Fatal("Error depositing into strategy", "err", err)
 	}
-	o.logger.Infof("Deposited %s into strategy %s", amount, mockTokenStrategyAddr)
+	o.logger.Infof("Deposited %s into strategy %s", amount, tokenStrategyAddr)
 
-	err = o.RegisterOperatorWithAvs(operatorEcdsaPrivateKey)
-	if err != nil {
+	if err := o.RegisterOperatorWithAvs(operatorEcdsaPrivateKey); err != nil {
 		o.logger.Fatal("Error registering operator with avs", "err", err)
 	}
 	o.logger.Infof("Registered operator with avs")
+
+	if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
+		o.logger.Fatal("Error delegating via service manager", "err", err)
+	}
+	o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
+}
+
+func (o *Operator) DelegateServiceManager(validatorAddr string, amount *big.Int) error {
+	serviceManager, err := avs.NewContractZRServiceManager(common.HexToAddress(o.config.ServiceManagerAddress), o.ethClient)
+	if err != nil {
+		o.logger.Fatal("Error creating service manager contract interface", "err", err)
+		return err
+	}
+
+	txOpts, err := o.avsWriter.TxMgr.GetNoSendTxOpts()
+	if err != nil {
+		o.logger.Errorf("Error getting txOpts")
+		return err
+	}
+
+	tx, err := serviceManager.Delegate(txOpts, validatorAddr, amount)
+	if err != nil {
+		o.logger.Errorf("Error assembling Delegate tx")
+		return err
+	}
+
+	if _, err = o.avsWriter.TxMgr.Send(context.Background(), tx); err != nil {
+		return errors.New("failed to send tx with err: " + err.Error())
+	}
+
+	return nil
 }
 
 func (o *Operator) RegisterOperatorWithEigenlayer() error {
@@ -54,8 +82,7 @@ func (o *Operator) RegisterOperatorWithEigenlayer() error {
 		Address:                 o.operatorAddr.String(),
 		EarningsReceiverAddress: o.operatorAddr.String(),
 	}
-	_, err := o.eigenlayerWriter.RegisterAsOperator(context.Background(), op)
-	if err != nil {
+	if _, err := o.eigenlayerWriter.RegisterAsOperator(context.Background(), op); err != nil {
 		o.logger.Error("Error registering operator with eigenlayer", "err", err)
 		return err
 	}
@@ -63,30 +90,7 @@ func (o *Operator) RegisterOperatorWithEigenlayer() error {
 }
 
 func (o *Operator) DepositIntoStrategy(strategyAddr common.Address, amount *big.Int) error {
-	_, tokenAddr, err := o.eigenlayerReader.GetStrategyAndUnderlyingToken(&bind.CallOpts{}, strategyAddr)
-	if err != nil {
-		o.logger.Error("Failed to fetch strategy contract", "err", err)
-		return err
-	}
-	contractErc20Mock, err := o.avsReader.GetErc20Mock(context.Background(), tokenAddr)
-	if err != nil {
-		o.logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-		return err
-	}
-	txOpts, err := o.avsWriter.TxMgr.GetNoSendTxOpts()
-	tx, err := contractErc20Mock.Mint(txOpts, o.operatorAddr, amount)
-	if err != nil {
-		o.logger.Errorf("Error assembling Mint tx")
-		return err
-	}
-	_, err = o.avsWriter.TxMgr.Send(context.Background(), tx)
-	if err != nil {
-		o.logger.Errorf("Error submitting Mint tx")
-		return err
-	}
-
-	_, err = o.eigenlayerWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount)
-	if err != nil {
+	if _, err := o.eigenlayerWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount); err != nil {
 		o.logger.Errorf("Error depositing into strategy", "err", err)
 		return err
 	}
@@ -97,7 +101,7 @@ func (o *Operator) DepositIntoStrategy(strategyAddr common.Address, amount *big.
 func (o *Operator) RegisterOperatorWithAvs(
 	operatorEcdsaKeyPair *ecdsa.PrivateKey,
 ) error {
-	// hardcode these things for now
+	// TODO: shouldn't hardcode values here
 	quorumNumbers := eigenSdkTypes.QuorumNums{eigenSdkTypes.QuorumNum(0)}
 	socket := "Not Needed"
 	operatorToAvsRegistrationSigSalt := [32]byte{123}
@@ -173,11 +177,4 @@ func (o *Operator) PrintOperatorStatus() error {
 	}
 	fmt.Println(string(operatorStatusJson))
 	return nil
-}
-
-func pubKeyG1ToBN254G1Point(p *bls.G1Point) regcoord.BN254G1Point {
-	return regcoord.BN254G1Point{
-		X: p.X.BigInt(new(big.Int)),
-		Y: p.Y.BigInt(new(big.Int)),
-	}
 }

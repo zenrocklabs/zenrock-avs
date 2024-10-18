@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
@@ -10,27 +9,25 @@ import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinato
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
-import "./IIncredibleSquaringTaskManager.sol";
+import "./interfaces/ZRTaskManagerI.sol";
 
-contract IncredibleSquaringTaskManager is
+contract ZRTaskManager is
     Initializable,
     OwnableUpgradeable,
     Pausable,
     BLSSignatureChecker,
     OperatorStateRetriever,
-    IIncredibleSquaringTaskManager
+    ZRTaskManagerI
 {
     using BN254 for BN254.G1Point;
 
     /* CONSTANT */
-    // The number of blocks from the task initialization within which the aggregator has to respond to
     uint32 public immutable TASK_RESPONSE_WINDOW_BLOCK;
-    uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 100;
+    uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 10000;
     uint256 internal constant _THRESHOLD_DENOMINATOR = 100;
 
     /* STORAGE */
-    // The latest task index
-    uint32 public latestTaskNum;
+    uint32 public latestTaskId;
 
     // mapping of task indices to all tasks hashes
     // when a task is created, task hash is stored here,
@@ -78,27 +75,24 @@ contract IncredibleSquaringTaskManager is
         generator = _generator;
     }
 
-    /* FUNCTIONS */
-    // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
-        uint256 numberToBeSquared,
+        uint32 taskId,
+        int64 zrChainBlockHeight,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
-        // create a new task struct
         Task memory newTask;
-        newTask.numberToBeSquared = numberToBeSquared;
+        newTask.taskId = taskId;
         newTask.taskCreatedBlock = uint32(block.number);
+        newTask.zrChainBlockHeight = zrChainBlockHeight;
         newTask.quorumThresholdPercentage = quorumThresholdPercentage;
         newTask.quorumNumbers = quorumNumbers;
 
-        // store hash of task onchain, emit event, and increase taskNum
-        allTaskHashes[latestTaskNum] = keccak256(abi.encode(newTask));
-        emit NewTaskCreated(latestTaskNum, newTask);
-        latestTaskNum = latestTaskNum + 1;
+        allTaskHashes[taskId] = keccak256(abi.encode(newTask));
+        emit NewTaskCreated(taskId, newTask);
+        latestTaskId = taskId;
     }
 
-    // NOTE: this function responds to existing tasks.
     function respondToTask(
         Task calldata task,
         TaskResponse calldata taskResponse,
@@ -110,18 +104,15 @@ contract IncredibleSquaringTaskManager is
 
         // check that the task is valid, hasn't been responsed yet, and is being responsed in time
         require(
-            keccak256(abi.encode(task)) ==
-                allTaskHashes[taskResponse.referenceTaskIndex],
+            keccak256(abi.encode(task)) == allTaskHashes[task.taskId],
             "supplied task does not match the one recorded in the contract"
         );
-        // some logical checks
         require(
-            allTaskResponses[taskResponse.referenceTaskIndex] == bytes32(0),
+            allTaskResponses[task.taskId] == bytes32(0),
             "Aggregator has already responded to the task"
         );
         require(
-            uint32(block.number) <=
-                taskCreatedBlock + TASK_RESPONSE_WINDOW_BLOCK,
+            uint32(block.number) <= taskCreatedBlock + TASK_RESPONSE_WINDOW_BLOCK,
             "Aggregator has responded to the task too late"
         );
 
@@ -129,7 +120,7 @@ contract IncredibleSquaringTaskManager is
         // calculate message which operators signed
         bytes32 message = keccak256(abi.encode(taskResponse));
 
-        // check the BLS signature
+        // check the aggregated BLS signature
         (
             QuorumStakeTotals memory quorumStakeTotals,
             bytes32 hashOfNonSigners
@@ -157,17 +148,16 @@ contract IncredibleSquaringTaskManager is
             uint32(block.number),
             hashOfNonSigners
         );
-        // updating the storage with task responsea
-        allTaskResponses[taskResponse.referenceTaskIndex] = keccak256(
+        // updating the storage with task response
+        allTaskResponses[task.taskId] = keccak256(
             abi.encode(taskResponse, taskResponseMetadata)
         );
 
-        // emitting event
         emit TaskResponded(taskResponse, taskResponseMetadata);
     }
 
     function taskNumber() external view returns (uint32) {
-        return latestTaskNum;
+        return latestTaskId;
     }
 
     // NOTE: this function enables a challenger to raise and resolve a challenge.
@@ -179,23 +169,21 @@ contract IncredibleSquaringTaskManager is
         TaskResponseMetadata calldata taskResponseMetadata,
         BN254.G1Point[] memory pubkeysOfNonSigningOperators
     ) external {
-        uint32 referenceTaskIndex = taskResponse.referenceTaskIndex;
-        uint256 numberToBeSquared = task.numberToBeSquared;
-        // some logical checks
+        uint32 referenceTaskId = taskResponse.referenceTaskId;
+        
         require(
-            allTaskResponses[referenceTaskIndex] != bytes32(0),
+            allTaskResponses[referenceTaskId] != bytes32(0),
             "Task hasn't been responded to yet"
         );
         require(
-            allTaskResponses[referenceTaskIndex] ==
+            allTaskResponses[referenceTaskId] ==
                 keccak256(abi.encode(taskResponse, taskResponseMetadata)),
             "Task response does not match the one recorded in the contract"
         );
         require(
-            taskSuccesfullyChallenged[referenceTaskIndex] == false,
+            taskSuccesfullyChallenged[referenceTaskId] == false,
             "The response to this task has already been challenged successfully."
         );
-
         require(
             uint32(block.number) <=
                 taskResponseMetadata.taskResponsedBlock +
@@ -203,25 +191,18 @@ contract IncredibleSquaringTaskManager is
             "The challenge period for this task has already expired."
         );
 
-        // logic for checking whether challenge is valid or not
-        uint256 actualSquaredOutput = numberToBeSquared * numberToBeSquared;
-        bool isResponseCorrect = (actualSquaredOutput ==
-            taskResponse.numberSquared);
-
-        // if response was correct, no slashing happens so we return
-        if (isResponseCorrect == true) {
-            emit TaskChallengedUnsuccessfully(referenceTaskIndex, msg.sender);
-            return;
-        }
+        // Verify that the taskId matches
+        require(
+            task.taskId == taskResponse.referenceTaskId,
+            "Task ID mismatch"
+        );
 
         // get the list of hash of pubkeys of operators who weren't part of the task response submitted by the aggregator
         bytes32[] memory hashesOfPubkeysOfNonSigningOperators = new bytes32[](
             pubkeysOfNonSigningOperators.length
         );
         for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
-            hashesOfPubkeysOfNonSigningOperators[
-                i
-            ] = pubkeysOfNonSigningOperators[i].hashG1Point();
+            hashesOfPubkeysOfNonSigningOperators[i] = pubkeysOfNonSigningOperators[i].hashG1Point();
         }
 
         // verify whether the pubkeys of "claimed" non-signers supplied by challenger are actually non-signers as recorded before
@@ -309,9 +290,9 @@ contract IncredibleSquaringTaskManager is
         // }
 
         // the task response has been challenged successfully
-        taskSuccesfullyChallenged[referenceTaskIndex] = true;
+        taskSuccesfullyChallenged[referenceTaskId] = true;
 
-        emit TaskChallengedSuccessfully(referenceTaskIndex, msg.sender);
+        emit TaskChallengedSuccessfully(referenceTaskId, msg.sender);
     }
 
     function getTaskResponseWindowBlock() external view returns (uint32) {

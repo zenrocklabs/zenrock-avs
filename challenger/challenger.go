@@ -7,13 +7,13 @@ import (
 
 	ethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/incredible-squaring-avs/common"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/zenrocklabs/zenrock-avs/common"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
 
-	"github.com/Layr-Labs/incredible-squaring-avs/challenger/types"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
+	"github.com/zenrocklabs/zenrock-avs/challenger/types"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 )
 
 type Challenger struct {
@@ -22,10 +22,10 @@ type Challenger struct {
 	avsReader          chainio.AvsReaderer
 	avsWriter          chainio.AvsWriterer
 	avsSubscriber      chainio.AvsSubscriberer
-	tasks              map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask
+	tasks              map[uint32]cstaskmanager.ZRTaskManagerITask
 	taskResponses      map[uint32]types.TaskResponseData
-	taskResponseChan   chan *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded
-	newTaskCreatedChan chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
+	taskResponseChan   chan *cstaskmanager.ContractZRTaskManagerTaskResponded
+	newTaskCreatedChan chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated
 }
 
 func NewChallenger(c *config.Config) (*Challenger, error) {
@@ -52,10 +52,10 @@ func NewChallenger(c *config.Config) (*Challenger, error) {
 		avsWriter:          avsWriter,
 		avsReader:          avsReader,
 		avsSubscriber:      avsSubscriber,
-		tasks:              make(map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask),
+		tasks:              make(map[uint32]cstaskmanager.ZRTaskManagerITask),
 		taskResponses:      make(map[uint32]types.TaskResponseData),
-		taskResponseChan:   make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded),
-		newTaskCreatedChan: make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated),
+		taskResponseChan:   make(chan *cstaskmanager.ContractZRTaskManagerTaskResponded),
+		newTaskCreatedChan: make(chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated),
 	}
 
 	return challenger, nil
@@ -112,12 +112,12 @@ func (c *Challenger) Start(ctx context.Context) error {
 
 }
 
-func (c *Challenger) processNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated) uint32 {
-	c.tasks[newTaskCreatedLog.TaskIndex] = newTaskCreatedLog.Task
-	return newTaskCreatedLog.TaskIndex
+func (c *Challenger) processNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZRTaskManagerNewTaskCreated) uint32 {
+	c.tasks[newTaskCreatedLog.TaskId] = newTaskCreatedLog.Task
+	return newTaskCreatedLog.TaskId
 }
 
-func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded) uint32 {
+func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.ContractZRTaskManagerTaskResponded) uint32 {
 	taskResponseRawLog, err := c.avsSubscriber.ParseTaskResponded(taskResponseLog.Raw)
 	if err != nil {
 		c.logger.Error("Error parsing task response. skipping task (this is probably bad and should be investigated)", "err", err)
@@ -131,28 +131,29 @@ func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.Contr
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
-	c.taskResponses[taskResponseRawLog.TaskResponse.ReferenceTaskIndex] = taskResponseData
-	return taskResponseRawLog.TaskResponse.ReferenceTaskIndex
+	c.taskResponses[taskResponseRawLog.TaskResponse.ReferenceTaskId] = taskResponseData
+	return taskResponseRawLog.TaskResponse.ReferenceTaskId
 }
 
 func (c *Challenger) callChallengeModule(taskIndex uint32) error {
-	numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
-	answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
-	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
+	panic("implement me")
+	// numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
+	// answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
+	// trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
 
-	// checking if the answer in the response submitted by aggregator is correct
-	if trueAnswer.Cmp(answerInResponse) != 0 {
-		c.logger.Infof("The number squared is not correct")
+	// // checking if the answer in the response submitted by aggregator is correct
+	// if trueAnswer.Cmp(answerInResponse) != 0 {
+	// 	c.logger.Infof("The number squared is not correct")
 
-		// raise challenge
-		c.raiseChallenge(taskIndex)
+	// 	// raise challenge
+	// 	c.raiseChallenge(taskIndex)
 
-		return nil
-	}
-	return types.NoErrorInTaskResponse
+	// 	return nil
+	// }
+	// return types.NoErrorInTaskResponse
 }
 
-func (c *Challenger) getNonSigningOperatorPubKeys(vLog *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded) []cstaskmanager.BN254G1Point {
+func (c *Challenger) getNonSigningOperatorPubKeys(vLog *cstaskmanager.ContractZRTaskManagerTaskResponded) []cstaskmanager.BN254G1Point {
 	c.logger.Info("vLog.Raw is", "vLog.Raw", vLog.Raw)
 
 	// get the nonSignerStakesAndSignature

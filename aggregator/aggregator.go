@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"math/big"
 	"sync"
 	"time"
 
@@ -14,21 +13,23 @@ import (
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/incredible-squaring-avs/aggregator/types"
-	"github.com/Layr-Labs/incredible-squaring-avs/core"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
+	"github.com/zenrocklabs/zenrock-avs/aggregator/types"
+	"github.com/zenrocklabs/zenrock-avs/core"
+	"github.com/zenrocklabs/zenrock-avs/core/chainio"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 )
 
 const (
 	// number of blocks after which a task is considered expired
 	// this hardcoded here because it's also hardcoded in the contracts, but should
 	// ideally be fetched from the contracts
-	taskChallengeWindowBlock = 100
+	taskChallengeWindowBlock = 10000
 	blockTimeSeconds         = 12 * time.Second
-	avsName                  = "incredible-squaring"
+	avsName                  = "zenrock"
+
+	taskCadence = 1000 * time.Second
 )
 
 // Aggregator sends tasks (numbers to square) onchain, then listens for operator signed TaskResponses.
@@ -69,11 +70,13 @@ type Aggregator struct {
 	serverIpPortAddr string
 	avsWriter        chainio.AvsWriterer
 	// aggregation related fields
-	blsAggregationService blsagg.BlsAggregationService
-	tasks                 map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask
-	tasksMu               sync.RWMutex
-	taskResponses         map[types.TaskIndex]map[sdktypes.TaskResponseDigest]cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-	taskResponsesMu       sync.RWMutex
+	blsAggregationService     blsagg.BlsAggregationService
+	tasks                     map[types.TaskId]cstaskmanager.ZRTaskManagerITask
+	tasksMu                   sync.RWMutex
+	taskResponses             map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse
+	taskResponsesMu           sync.RWMutex
+	currentTaskId             uint32
+	currentZrChainBlockHeight int64
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
@@ -114,8 +117,8 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
-		tasks:                 make(map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask),
-		taskResponses:         make(map[types.TaskIndex]map[sdktypes.TaskResponseDigest]cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse),
+		tasks:                 make(map[types.TaskId]cstaskmanager.ZRTaskManagerITask),
+		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse),
 	}, nil
 }
 
@@ -125,14 +128,18 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 	go agg.startServer(ctx)
 
 	// TODO(soubhik): refactor task generation/sending into a separate function that we can run as goroutine
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(taskCadence)
 	agg.logger.Infof("Aggregator set to send new task every 10 seconds...")
 	defer ticker.Stop()
-	taskNum := int64(0)
-	// ticker doesn't tick immediately, so we send the first task here
-	// see https://github.com/golang/go/issues/17601
-	_ = agg.sendNewTask(big.NewInt(taskNum))
-	taskNum++
+
+	// Initialize currentTaskId
+	agg.currentTaskId = 0
+	agg.currentZrChainBlockHeight = 0 // TODO: get the actual zrChain block height
+
+	// Send the first task
+	_ = agg.sendNewTask()
+	agg.currentTaskId++
+	agg.currentZrChainBlockHeight++ // TODO: get the actual zrChain block height
 
 	for {
 		select {
@@ -142,12 +149,11 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
 			agg.sendAggregatedResponseToContract(blsAggServiceResp)
 		case <-ticker.C:
-			err := agg.sendNewTask(big.NewInt(taskNum))
-			taskNum++
-			if err != nil {
-				// we log the errors inside sendNewTask() so here we just continue to the next task
+			if err := agg.sendNewTask(); err != nil {
 				continue
 			}
+			agg.currentTaskId++
+			agg.currentZrChainBlockHeight++ // TODO: get the actual zrChain block height
 		}
 	}
 }
@@ -156,7 +162,7 @@ func (agg *Aggregator) sendAggregatedResponseToContract(blsAggServiceResp blsagg
 	// TODO: check if blsAggServiceResp contains an err
 	if blsAggServiceResp.Err != nil {
 		agg.logger.Error("BlsAggregationServiceResponse contains an error", "err", blsAggServiceResp.Err)
-		// panicing to help with debugging (fail fast), but we shouldn't panic if we run this in production
+		// panicking to help with debugging (fail fast), but we shouldn't panic if we run this in production
 		panic(blsAggServiceResp.Err)
 	}
 	nonSignerPubkeys := []cstaskmanager.BN254G1Point{}
@@ -195,12 +201,13 @@ func (agg *Aggregator) sendAggregatedResponseToContract(blsAggServiceResp blsagg
 
 // sendNewTask sends a new task to the task manager contract, and updates the Task dict struct
 // with the information of operators opted into quorum 0 at the block of task creation.
-func (agg *Aggregator) sendNewTask(numToSquare *big.Int) error {
-	agg.logger.Info("Aggregator sending new task", "numberToSquare", numToSquare)
-	// Send number to square to the task manager contract
-	newTask, taskIndex, err := agg.avsWriter.SendNewTaskNumberToSquare(context.Background(), numToSquare, types.QUORUM_THRESHOLD_NUMERATOR, types.QUORUM_NUMBERS)
+func (agg *Aggregator) sendNewTask() error {
+	agg.logger.Info("Aggregator sending new task", "taskId", agg.currentTaskId, "zrChainBlockHeight", agg.currentZrChainBlockHeight)
+
+	// Send task to the task manager contract
+	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, agg.currentZrChainBlockHeight, types.QUORUM_THRESHOLD_NUMERATOR, types.QUORUM_NUMBERS)
 	if err != nil {
-		agg.logger.Error("Aggregator failed to send number to square", "err", err)
+		agg.logger.Error("Aggregator failed to send new task", "err", err)
 		return err
 	}
 
@@ -212,6 +219,7 @@ func (agg *Aggregator) sendNewTask(numToSquare *big.Int) error {
 	for i := range newTask.QuorumNumbers {
 		quorumThresholdPercentages[i] = sdktypes.QuorumThresholdPercentage(newTask.QuorumThresholdPercentage)
 	}
+
 	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
 	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block number.
 	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds
@@ -219,6 +227,7 @@ func (agg *Aggregator) sendNewTask(numToSquare *big.Int) error {
 	for _, quorumNum := range newTask.QuorumNumbers {
 		quorumNums = append(quorumNums, sdktypes.QuorumNum(quorumNum))
 	}
+
 	agg.blsAggregationService.InitializeNewTask(taskIndex, newTask.TaskCreatedBlock, quorumNums, quorumThresholdPercentages, taskTimeToExpiry)
 	return nil
 }

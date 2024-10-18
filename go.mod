@@ -1,8 +1,8 @@
-module github.com/Layr-Labs/incredible-squaring-avs
+module github.com/zenrocklabs/zenrock-avs
 
-go 1.21
+go 1.23
 
-toolchain go1.21.0
+toolchain go1.23.0
 
 require (
 	github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775

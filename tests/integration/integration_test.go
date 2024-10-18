@@ -17,16 +17,16 @@ import (
 	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
-	"github.com/Layr-Labs/incredible-squaring-avs/aggregator"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
-	"github.com/Layr-Labs/incredible-squaring-avs/operator"
-	"github.com/Layr-Labs/incredible-squaring-avs/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"github.com/zenrocklabs/zenrock-avs/aggregator"
+	"github.com/zenrocklabs/zenrock-avs/core/chainio"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
+	"github.com/zenrocklabs/zenrock-avs/operator"
+	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
 type IntegrationClients struct {
@@ -139,7 +139,6 @@ func TestIntegration(t *testing.T) {
 	os.Setenv("OPERATOR_ECDSA_KEY_PASSWORD", "")
 	nodeConfig.BlsPrivateKeyStorePath = "../keys/test.bls.key.json"
 	nodeConfig.EcdsaPrivateKeyStorePath = "../keys/test.ecdsa.key.json"
-	nodeConfig.RegisterOperatorOnStartup = true
 	nodeConfig.EthRpcUrl = "http://" + anvilEndpoint
 	nodeConfig.EthWsUrl = "ws://" + anvilEndpoint
 	operator, err := operator.NewOperatorFromConfig(nodeConfig)

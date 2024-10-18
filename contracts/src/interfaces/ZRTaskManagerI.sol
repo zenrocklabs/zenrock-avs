@@ -3,34 +3,35 @@ pragma solidity ^0.8.9;
 
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
 
-interface IIncredibleSquaringTaskManager {
+interface ZRTaskManagerI {
     // EVENTS
-    event NewTaskCreated(uint32 indexed taskIndex, Task task);
+    event NewTaskCreated(uint32 indexed taskId, Task task);
 
     event TaskResponded(
         TaskResponse taskResponse,
         TaskResponseMetadata taskResponseMetadata
     );
 
-    event TaskCompleted(uint32 indexed taskIndex);
+    event TaskCompleted(uint32 indexed taskId);
 
     event TaskChallengedSuccessfully(
-        uint32 indexed taskIndex,
+        uint32 indexed taskId,
         address indexed challenger
     );
 
     event TaskChallengedUnsuccessfully(
-        uint32 indexed taskIndex,
+        uint32 indexed taskId,
         address indexed challenger
     );
 
     // STRUCTS
     struct Task {
-        uint256 numberToBeSquared;
+        uint32 taskId;
         uint32 taskCreatedBlock;
+        int64 zrChainBlockHeight;
         // task submitter decides on the criteria for a task to be completed
-        // note that this does not mean the task was "correctly" answered (i.e. the number was squared correctly)
-        //      this is for the challenge logic to verify
+        // note that this does not mean the task was "correctly" answered (i.e. the ID was signed correctly)
+        // - this is for the challenge logic to verify
         // task is completed (and contract will accept its TaskResponse) when each quorumNumbers specified here
         // are signed by at least quorumThresholdPercentage of the operators
         // note that we set the quorumThresholdPercentage to be the same for all quorumNumbers, but this could be changed
@@ -42,9 +43,8 @@ interface IIncredibleSquaringTaskManager {
     // these signatures are aggregated and sent to the contract as response.
     struct TaskResponse {
         // Can be obtained by the operator from the event NewTaskCreated.
-        uint32 referenceTaskIndex;
-        // This is just the response that the operator has to compute by itself.
-        uint256 numberSquared;
+        uint32 referenceTaskId;
+        int64 zrChainBlockHeight;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -56,17 +56,15 @@ interface IIncredibleSquaringTaskManager {
     }
 
     // FUNCTIONS
-    // NOTE: this function creates new task.
     function createNewTask(
-        uint256 numberToBeSquared,
+        uint32 taskId,
+        int64 zrChainBlockHeight,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external;
 
-    /// @notice Returns the current 'taskNumber' for the middleware
     function taskNumber() external view returns (uint32);
 
-    // // NOTE: this function raises challenge to existing tasks.
     function raiseAndResolveChallenge(
         Task calldata task,
         TaskResponse calldata taskResponse,
@@ -74,6 +72,5 @@ interface IIncredibleSquaringTaskManager {
         BN254.G1Point[] memory pubkeysOfNonSigningOperators
     ) external;
 
-    /// @notice Returns the TASK_RESPONSE_WINDOW_BLOCK
     function getTaskResponseWindowBlock() external view returns (uint32);
 }

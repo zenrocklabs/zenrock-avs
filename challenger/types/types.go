@@ -3,12 +3,12 @@ package types
 import (
 	"errors"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 )
 
 type TaskResponseData struct {
-	TaskResponse              cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-	TaskResponseMetadata      cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata
+	TaskResponse              cstaskmanager.ZRTaskManagerITaskResponse
+	TaskResponseMetadata      cstaskmanager.ZRTaskManagerITaskResponseMetadata
 	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
 }
 

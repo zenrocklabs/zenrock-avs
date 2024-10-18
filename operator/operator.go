@@ -2,20 +2,18 @@ package operator
 
 import (
 	"context"
-	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/Layr-Labs/incredible-squaring-avs/aggregator"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
-	"github.com/Layr-Labs/incredible-squaring-avs/metrics"
-	"github.com/Layr-Labs/incredible-squaring-avs/types"
+	"github.com/zenrocklabs/zenrock-avs/aggregator"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core"
+	"github.com/zenrocklabs/zenrock-avs/core/chainio"
+	"github.com/zenrocklabs/zenrock-avs/metrics"
+	"github.com/zenrocklabs/zenrock-avs/types"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -58,7 +56,7 @@ type Operator struct {
 	operatorId       sdktypes.OperatorId
 	operatorAddr     common.Address
 	// receive new tasks in this chan (typically from listening to onchain event)
-	newTaskCreatedChan chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
+	newTaskCreatedChan chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated
 	// ip address of aggregator
 	aggregatorServerIpPortAddr string
 	// rpc client to send signed task responses to aggregator
@@ -226,15 +224,26 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
 		aggregatorRpcClient:                aggregatorRpcClient,
-		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated),
+		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated),
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
 
 	}
 
-	if c.RegisterOperatorOnStartup {
+	operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
+	if err != nil {
+		logger.Error("Error checking if operator is registered", "err", err)
+		return nil, err
+	}
+	if !operatorIsRegistered {
+		logger.Info("Operator is not registered. Registering operator...")
 		operator.registerOperatorOnStartup(operatorEcdsaPrivateKey, common.HexToAddress(c.TokenStrategyAddr))
 	}
+
+	// if err := operator.DelegateServiceManager(operator.config.OperatorValidatorAddress, big.NewInt(100000000000000000)); err != nil {
+	// 	operator.logger.Fatal("Error delegating via service manager", "err", err)
+	// }
+	// operator.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
 
 	// OperatorId is set in contract during registration so we get it after registering operator.
 	operatorId, err := sdkClients.AvsRegistryChainReader.GetOperatorId(&bind.CallOpts{}, operator.operatorAddr)
@@ -255,17 +264,6 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 }
 
 func (o *Operator) Start(ctx context.Context) error {
-	operatorIsRegistered, err := o.avsReader.IsOperatorRegistered(&bind.CallOpts{}, o.operatorAddr)
-	if err != nil {
-		o.logger.Error("Error checking if operator is registered", "err", err)
-		return err
-	}
-	if !operatorIsRegistered {
-		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack trace
-		// that hides the actual error message. This error msg is more explicit and doesn't require showing a stack trace to the user.
-		return fmt.Errorf("operator is not registered. Registering operator using the operator-cli before starting operator")
-	}
-
 	o.logger.Infof("Starting operator.")
 
 	if o.config.EnableNodeApi {
@@ -306,26 +304,27 @@ func (o *Operator) Start(ctx context.Context) error {
 	}
 }
 
-// Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
-// The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
-func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated) *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse {
+// ProcessNewTaskCreatedLog takes a NewTaskCreatedLog struct as input and returns a TaskResponse struct.
+// The TaskResponse struct is the struct that is signed and sent to the contract as a task response.
+func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZRTaskManagerNewTaskCreated) *cstaskmanager.ZRTaskManagerITaskResponse {
 	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
 	o.logger.Info("Received new task",
-		"numberToBeSquared", newTaskCreatedLog.Task.NumberToBeSquared,
-		"taskIndex", newTaskCreatedLog.TaskIndex,
+		"taskId", newTaskCreatedLog.Task.TaskId,
+		"zrChainBlockHeight", newTaskCreatedLog.Task.ZrChainBlockHeight,
 		"taskCreatedBlock", newTaskCreatedLog.Task.TaskCreatedBlock,
 		"quorumNumbers", newTaskCreatedLog.Task.QuorumNumbers,
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
-	numberSquared := big.NewInt(0).Exp(newTaskCreatedLog.Task.NumberToBeSquared, big.NewInt(2), nil)
-	taskResponse := &cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-		ReferenceTaskIndex: newTaskCreatedLog.TaskIndex,
-		NumberSquared:      numberSquared,
+
+	// Create the TaskResponse with the new structure
+	taskResponse := &cstaskmanager.ZRTaskManagerITaskResponse{
+		ReferenceTaskId: newTaskCreatedLog.Task.TaskId,
 	}
+
 	return taskResponse
 }
 
-func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) (*aggregator.SignedTaskResponse, error) {
+func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.ZRTaskManagerITaskResponse) (*aggregator.SignedTaskResponse, error) {
 	taskResponseHash, err := core.GetTaskResponseDigest(taskResponse)
 	if err != nil {
 		o.logger.Error("Error getting task response header hash. skipping task (this is not expected and should be investigated)", "err", err)

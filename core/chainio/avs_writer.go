@@ -2,7 +2,6 @@ package chainio
 
 import (
 	"context"
-	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,29 +12,30 @@ import (
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
 )
 
 type AvsWriterer interface {
 	avsregistry.AvsRegistryWriter
 
-	SendNewTaskNumberToSquare(
+	SendNewTask(
 		ctx context.Context,
-		numToSquare *big.Int,
+		taskId uint32,
+		zrChainBlockHeight int64,
 		quorumThresholdPercentage sdktypes.QuorumThresholdPercentage,
 		quorumNumbers sdktypes.QuorumNums,
-	) (cstaskmanager.IIncredibleSquaringTaskManagerTask, uint32, error)
+	) (cstaskmanager.ZRTaskManagerITask, uint32, error)
 	RaiseChallenge(
 		ctx context.Context,
-		task cstaskmanager.IIncredibleSquaringTaskManagerTask,
-		taskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse,
-		taskResponseMetadata cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata,
+		task cstaskmanager.ZRTaskManagerITask,
+		taskResponse cstaskmanager.ZRTaskManagerITaskResponse,
+		taskResponseMetadata cstaskmanager.ZRTaskManagerITaskResponseMetadata,
 		pubkeysOfNonSigningOperators []cstaskmanager.BN254G1Point,
 	) (*types.Receipt, error)
 	SendAggregatedResponse(ctx context.Context,
-		task cstaskmanager.IIncredibleSquaringTaskManagerTask,
-		taskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse,
+		task cstaskmanager.ZRTaskManagerITask,
+		taskResponse cstaskmanager.ZRTaskManagerITaskResponse,
 		nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
 	) (*types.Receipt, error)
 }
@@ -45,7 +45,7 @@ type AvsWriter struct {
 	AvsContractBindings *AvsManagersBindings
 	logger              logging.Logger
 	TxMgr               txmgr.TxManager
-	client              eth.Client
+	client              eth.Client // TODO: remove?
 }
 
 var _ AvsWriterer = (*AvsWriter)(nil)
@@ -75,34 +75,40 @@ func NewAvsWriter(avsRegistryWriter avsregistry.AvsRegistryWriter, avsServiceBin
 	}
 }
 
-// returns the tx receipt, as well as the task index (which it gets from parsing the tx receipt logs)
-func (w *AvsWriter) SendNewTaskNumberToSquare(ctx context.Context, numToSquare *big.Int, quorumThresholdPercentage sdktypes.QuorumThresholdPercentage, quorumNumbers sdktypes.QuorumNums) (cstaskmanager.IIncredibleSquaringTaskManagerTask, uint32, error) {
+// SendNewTask sends a new task to the contract and returns the task details and index
+func (w *AvsWriter) SendNewTask(ctx context.Context, taskId uint32, zrChainBlockHeight int64, quorumThresholdPercentage sdktypes.QuorumThresholdPercentage, quorumNumbers sdktypes.QuorumNums) (cstaskmanager.ZRTaskManagerITask, uint32, error) {
 	txOpts, err := w.TxMgr.GetNoSendTxOpts()
 	if err != nil {
 		w.logger.Errorf("Error getting tx opts")
-		return cstaskmanager.IIncredibleSquaringTaskManagerTask{}, 0, err
+		return cstaskmanager.ZRTaskManagerITask{}, 0, err
 	}
-	tx, err := w.AvsContractBindings.TaskManager.CreateNewTask(txOpts, numToSquare, uint32(quorumThresholdPercentage), quorumNumbers.UnderlyingType())
+
+	// Call the updated CreateNewTask function with taskId and zrChainBlockHeight
+	tx, err := w.AvsContractBindings.TaskManager.CreateNewTask(txOpts, taskId, zrChainBlockHeight, uint32(quorumThresholdPercentage), quorumNumbers.UnderlyingType())
 	if err != nil {
 		w.logger.Errorf("Error assembling CreateNewTask tx")
-		return cstaskmanager.IIncredibleSquaringTaskManagerTask{}, 0, err
+		return cstaskmanager.ZRTaskManagerITask{}, 0, err
 	}
+
 	receipt, err := w.TxMgr.Send(ctx, tx)
 	if err != nil {
 		w.logger.Errorf("Error submitting CreateNewTask tx")
-		return cstaskmanager.IIncredibleSquaringTaskManagerTask{}, 0, err
+		return cstaskmanager.ZRTaskManagerITask{}, 0, err
 	}
-	newTaskCreatedEvent, err := w.AvsContractBindings.TaskManager.ContractIncredibleSquaringTaskManagerFilterer.ParseNewTaskCreated(*receipt.Logs[0])
+
+	// Parse the NewTaskCreated event from the transaction receipt
+	newTaskCreatedEvent, err := w.AvsContractBindings.TaskManager.ContractZRTaskManagerFilterer.ParseNewTaskCreated(*receipt.Logs[0])
 	if err != nil {
 		w.logger.Error("Aggregator failed to parse new task created event", "err", err)
-		return cstaskmanager.IIncredibleSquaringTaskManagerTask{}, 0, err
+		return cstaskmanager.ZRTaskManagerITask{}, 0, err
 	}
-	return newTaskCreatedEvent.Task, newTaskCreatedEvent.TaskIndex, nil
+
+	return newTaskCreatedEvent.Task, newTaskCreatedEvent.TaskId, nil
 }
 
 func (w *AvsWriter) SendAggregatedResponse(
-	ctx context.Context, task cstaskmanager.IIncredibleSquaringTaskManagerTask,
-	taskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse,
+	ctx context.Context, task cstaskmanager.ZRTaskManagerITask,
+	taskResponse cstaskmanager.ZRTaskManagerITaskResponse,
 	nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
 ) (*types.Receipt, error) {
 	txOpts, err := w.TxMgr.GetNoSendTxOpts()
@@ -125,9 +131,9 @@ func (w *AvsWriter) SendAggregatedResponse(
 
 func (w *AvsWriter) RaiseChallenge(
 	ctx context.Context,
-	task cstaskmanager.IIncredibleSquaringTaskManagerTask,
-	taskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse,
-	taskResponseMetadata cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata,
+	task cstaskmanager.ZRTaskManagerITask,
+	taskResponse cstaskmanager.ZRTaskManagerITaskResponse,
+	taskResponseMetadata cstaskmanager.ZRTaskManagerITaskResponseMetadata,
 	pubkeysOfNonSigningOperators []cstaskmanager.BN254G1Point,
 ) (*types.Receipt, error) {
 	txOpts, err := w.TxMgr.GetNoSendTxOpts()

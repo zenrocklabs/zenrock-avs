@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/rpc"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -38,34 +38,33 @@ func (agg *Aggregator) startServer(ctx context.Context) error {
 	return nil
 }
 
+// Update the SignedTaskResponse struct to reflect the new task structure
 type SignedTaskResponse struct {
-	TaskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
+	TaskResponse cstaskmanager.ZRTaskManagerITaskResponse
 	BlsSignature bls.Signature
 	OperatorId   types.OperatorId
 }
 
-// rpc endpoint which is called by operator
-// reply doesn't need to be checked. If there are no errors, the task response is accepted
-// rpc framework forces a reply type to exist, so we put bool as a placeholder
+// Update the ProcessSignedTaskResponse function to handle the new task structure
 func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
 	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
-	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
+	taskId := signedTaskResponse.TaskResponse.ReferenceTaskId
 	taskResponseDigest, err := core.GetTaskResponseDigest(&signedTaskResponse.TaskResponse)
 	if err != nil {
 		agg.logger.Error("Failed to get task response digest", "err", err)
 		return TaskResponseDigestNotFoundError500
 	}
 	agg.taskResponsesMu.Lock()
-	if _, ok := agg.taskResponses[taskIndex]; !ok {
-		agg.taskResponses[taskIndex] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse)
+	if _, ok := agg.taskResponses[taskId]; !ok {
+		agg.taskResponses[taskId] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse)
 	}
-	if _, ok := agg.taskResponses[taskIndex][taskResponseDigest]; !ok {
-		agg.taskResponses[taskIndex][taskResponseDigest] = signedTaskResponse.TaskResponse
+	if _, ok := agg.taskResponses[taskId][taskResponseDigest]; !ok {
+		agg.taskResponses[taskId][taskResponseDigest] = signedTaskResponse.TaskResponse
 	}
 	agg.taskResponsesMu.Unlock()
 
 	err = agg.blsAggregationService.ProcessNewSignature(
-		context.Background(), taskIndex, taskResponseDigest,
+		context.Background(), taskId, taskResponseDigest,
 		&signedTaskResponse.BlsSignature, signedTaskResponse.OperatorId,
 	)
 	return err
