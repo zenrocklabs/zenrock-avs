@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.0.0...v1.0.1) (2024-10-21)
+
+
+### Bug Fixes
+
+* temporarily disable code `registration.go` ([45f883f](https://github.com/zenrocklabs/zenrock-avs/commit/45f883f21140b1360b4b13e14a3bc9f06e0f2aaf))
+
 # 1.0.0 (2024-10-21)
 
 
