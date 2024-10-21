@@ -1,3 +1,20 @@
+# 1.0.0 (2024-10-21)
+
+
+### Bug Fixes
+
+* semantic release branch ([28a6331](https://github.com/zenrocklabs/zenrock-avs/commit/28a633113e3f5bb59216ccbfa41cf92439ed5e18))
+
+
+### Features
+
+* initial version ([fe0e597](https://github.com/zenrocklabs/zenrock-avs/commit/fe0e597dea31de419937044078b209684deab3e5))
+
+
+### Reverts
+
+* Revert "revert to eigenlayer-middleware testnet-holesky branch b/c dev has payments stuff" ([abe3340](https://github.com/zenrocklabs/zenrock-avs/commit/abe3340e64ccc94b3e8959608cc9d687b3c86307))
+
 # [1.4.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.5...v1.4.0) (2024-10-16)
 
 
