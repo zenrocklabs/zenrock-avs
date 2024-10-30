@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
 
-interface ZRTaskManagerI {
+interface ITaskManagerZR {
     // EVENTS
     event NewTaskCreated(uint32 indexed taskId, Task task);
 
@@ -28,7 +28,6 @@ interface ZRTaskManagerI {
     struct Task {
         uint32 taskId;
         uint32 taskCreatedBlock;
-        int64 zrChainBlockHeight;
         // task submitter decides on the criteria for a task to be completed
         // note that this does not mean the task was "correctly" answered (i.e. the ID was signed correctly)
         // - this is for the challenge logic to verify
@@ -44,7 +43,7 @@ interface ZRTaskManagerI {
     struct TaskResponse {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskId;
-        int64 zrChainBlockHeight;
+        string[] activeSetZRChain;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -58,7 +57,6 @@ interface ZRTaskManagerI {
     // FUNCTIONS
     function createNewTask(
         uint32 taskId,
-        int64 zrChainBlockHeight,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external;

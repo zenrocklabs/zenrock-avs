@@ -11,7 +11,7 @@ import (
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 
 	erc20mock "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ERC20Mock"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 )
 

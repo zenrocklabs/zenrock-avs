@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/rpc"
 
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	"github.com/zenrocklabs/zenrock-avs/core"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -40,7 +40,7 @@ func (agg *Aggregator) startServer(ctx context.Context) error {
 
 // Update the SignedTaskResponse struct to reflect the new task structure
 type SignedTaskResponse struct {
-	TaskResponse cstaskmanager.ZRTaskManagerITaskResponse
+	TaskResponse cstaskmanager.ITaskManagerZRTaskResponse
 	BlsSignature bls.Signature
 	OperatorId   types.OperatorId
 }
@@ -56,7 +56,7 @@ func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskR
 	}
 	agg.taskResponsesMu.Lock()
 	if _, ok := agg.taskResponses[taskId]; !ok {
-		agg.taskResponses[taskId] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse)
+		agg.taskResponses[taskId] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse)
 	}
 	if _, ok := agg.taskResponses[taskId][taskResponseDigest]; !ok {
 		agg.taskResponses[taskId][taskResponseDigest] = signedTaskResponse.TaskResponse

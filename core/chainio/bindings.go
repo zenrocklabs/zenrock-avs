@@ -10,12 +10,12 @@ import (
 
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	erc20mock "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ERC20Mock"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	csservicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 )
 
 type AvsManagersBindings struct {
-	TaskManager    *cstaskmanager.ContractZRTaskManager
+	TaskManager    *cstaskmanager.ContractTaskManagerZR
 	ServiceManager *csservicemanager.ContractZRServiceManager
 	ethClient      eth.Client
 	logger         logging.Logger
@@ -36,12 +36,12 @@ func NewAvsManagersBindings(registryCoordinatorAddr, operatorStateRetrieverAddr 
 		return nil, err
 	}
 
-	taskManagerAddr, err := contractServiceManager.ZrTaskManager(&bind.CallOpts{})
+	taskManagerAddr, err := contractServiceManager.TaskManagerZR(&bind.CallOpts{})
 	if err != nil {
 		logger.Error("Failed to fetch TaskManager address", "err", err)
 		return nil, err
 	}
-	contractTaskManager, err := cstaskmanager.NewContractZRTaskManager(taskManagerAddr, ethclient)
+	contractTaskManager, err := cstaskmanager.NewContractTaskManagerZR(taskManagerAddr, ethclient)
 	if err != nil {
 		logger.Error("Failed to fetch IIncredibleSquaringTaskManager contract", "err", err)
 		return nil, err
