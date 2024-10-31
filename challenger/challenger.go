@@ -12,7 +12,7 @@ import (
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 
 	"github.com/zenrocklabs/zenrock-avs/challenger/types"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 )
 
@@ -22,10 +22,10 @@ type Challenger struct {
 	avsReader          chainio.AvsReaderer
 	avsWriter          chainio.AvsWriterer
 	avsSubscriber      chainio.AvsSubscriberer
-	tasks              map[uint32]cstaskmanager.ZRTaskManagerITask
+	tasks              map[uint32]cstaskmanager.ITaskManagerZRTask
 	taskResponses      map[uint32]types.TaskResponseData
-	taskResponseChan   chan *cstaskmanager.ContractZRTaskManagerTaskResponded
-	newTaskCreatedChan chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated
+	taskResponseChan   chan *cstaskmanager.ContractTaskManagerZRTaskResponded
+	newTaskCreatedChan chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated
 }
 
 func NewChallenger(c *config.Config) (*Challenger, error) {
@@ -52,10 +52,10 @@ func NewChallenger(c *config.Config) (*Challenger, error) {
 		avsWriter:          avsWriter,
 		avsReader:          avsReader,
 		avsSubscriber:      avsSubscriber,
-		tasks:              make(map[uint32]cstaskmanager.ZRTaskManagerITask),
+		tasks:              make(map[uint32]cstaskmanager.ITaskManagerZRTask),
 		taskResponses:      make(map[uint32]types.TaskResponseData),
-		taskResponseChan:   make(chan *cstaskmanager.ContractZRTaskManagerTaskResponded),
-		newTaskCreatedChan: make(chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated),
+		taskResponseChan:   make(chan *cstaskmanager.ContractTaskManagerZRTaskResponded),
+		newTaskCreatedChan: make(chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated),
 	}
 
 	return challenger, nil
@@ -112,12 +112,12 @@ func (c *Challenger) Start(ctx context.Context) error {
 
 }
 
-func (c *Challenger) processNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZRTaskManagerNewTaskCreated) uint32 {
+func (c *Challenger) processNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractTaskManagerZRNewTaskCreated) uint32 {
 	c.tasks[newTaskCreatedLog.TaskId] = newTaskCreatedLog.Task
 	return newTaskCreatedLog.TaskId
 }
 
-func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.ContractZRTaskManagerTaskResponded) uint32 {
+func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.ContractTaskManagerZRTaskResponded) uint32 {
 	taskResponseRawLog, err := c.avsSubscriber.ParseTaskResponded(taskResponseLog.Raw)
 	if err != nil {
 		c.logger.Error("Error parsing task response. skipping task (this is probably bad and should be investigated)", "err", err)
@@ -153,7 +153,7 @@ func (c *Challenger) callChallengeModule(taskIndex uint32) error {
 	// return types.NoErrorInTaskResponse
 }
 
-func (c *Challenger) getNonSigningOperatorPubKeys(vLog *cstaskmanager.ContractZRTaskManagerTaskResponded) []cstaskmanager.BN254G1Point {
+func (c *Challenger) getNonSigningOperatorPubKeys(vLog *cstaskmanager.ContractTaskManagerZRTaskResponded) []cstaskmanager.BN254G1Point {
 	c.logger.Info("vLog.Raw is", "vLog.Raw", vLog.Raw)
 
 	// get the nonSignerStakesAndSignature

@@ -9,22 +9,22 @@ import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinato
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
-import "./interfaces/ZRTaskManagerI.sol";
+import "./interfaces/ITaskManagerZR.sol";
 
-contract ZRTaskManager is
+contract TaskManagerZR is
     Initializable,
     OwnableUpgradeable,
     Pausable,
     BLSSignatureChecker,
     OperatorStateRetriever,
-    ZRTaskManagerI
+    ITaskManagerZR
 {
     using BN254 for BN254.G1Point;
 
     /* CONSTANT */
     uint32 public immutable TASK_RESPONSE_WINDOW_BLOCK;
     uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 10000;
-    uint256 internal constant _THRESHOLD_DENOMINATOR = 100;
+    uint256 internal constant _THRESHOLD_DENOMINATOR = 67;
 
     /* STORAGE */
     uint32 public latestTaskId;
@@ -38,10 +38,16 @@ contract ZRTaskManager is
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(uint32 => bytes32) public allTaskResponses;
 
+    // mapping of task indices to validator addresses for that task
+    mapping(uint32 => string[]) public taskValidatorAddresses;
+
     mapping(uint32 => bool) public taskSuccesfullyChallenged;
 
     address public aggregator;
     address public generator;
+
+    /* EVENTS */
+    event ValidatorAddressesStored(uint32 indexed taskId, string[] addresses);
 
     /* MODIFIERS */
     modifier onlyAggregator() {
@@ -77,14 +83,12 @@ contract ZRTaskManager is
 
     function createNewTask(
         uint32 taskId,
-        int64 zrChainBlockHeight,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
         Task memory newTask;
         newTask.taskId = taskId;
         newTask.taskCreatedBlock = uint32(block.number);
-        newTask.zrChainBlockHeight = zrChainBlockHeight;
         newTask.quorumThresholdPercentage = quorumThresholdPercentage;
         newTask.quorumNumbers = quorumNumbers;
 
@@ -143,6 +147,10 @@ contract ZRTaskManager is
                 "Signatories do not own at least threshold percentage of a quorum"
             );
         }
+
+        // Store the validator addresses
+        taskValidatorAddresses[task.taskId] = taskResponse.activeSetZRChain;
+        emit ValidatorAddressesStored(task.taskId, taskResponse.activeSetZRChain);
 
         TaskResponseMetadata memory taskResponseMetadata = TaskResponseMetadata(
             uint32(block.number),
@@ -297,5 +305,23 @@ contract ZRTaskManager is
 
     function getTaskResponseWindowBlock() external view returns (uint32) {
         return TASK_RESPONSE_WINDOW_BLOCK;
+    }
+
+    function getActiveSet(uint32 taskId) external view returns (string[] memory) {
+        return taskValidatorAddresses[taskId];
+    }
+
+    function getLatestActiveSet() external view returns (string[] memory) {
+        return taskValidatorAddresses[latestTaskId];
+    }
+
+    function isValidatorInTaskSet(uint32 taskId, string memory validatorAddress) external view returns (bool) {
+        string[] memory validators = taskValidatorAddresses[taskId];
+        for (uint i = 0; i < validators.length; i++) {
+            if (keccak256(abi.encodePacked(validators[i])) == keccak256(abi.encodePacked(validatorAddress))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

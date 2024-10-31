@@ -11,9 +11,9 @@ package mocks
 import (
 	reflect "reflect"
 
-	contractZRTaskManager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 	types "github.com/ethereum/go-ethereum/core/types"
 	event "github.com/ethereum/go-ethereum/event"
+	contractTaskManagerZR "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,10 +41,10 @@ func (m *MockAvsSubscriberer) EXPECT() *MockAvsSubscribererMockRecorder {
 }
 
 // ParseTaskResponded mocks base method.
-func (m *MockAvsSubscriberer) ParseTaskResponded(arg0 types.Log) (*contractZRTaskManager.ContractZRTaskManagerTaskResponded, error) {
+func (m *MockAvsSubscriberer) ParseTaskResponded(arg0 types.Log) (*contractTaskManagerZR.ContractTaskManagerZRTaskResponded, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ParseTaskResponded", arg0)
-	ret0, _ := ret[0].(*contractZRTaskManager.ContractZRTaskManagerTaskResponded)
+	ret0, _ := ret[0].(*contractTaskManagerZR.ContractTaskManagerZRTaskResponded)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -56,7 +56,7 @@ func (mr *MockAvsSubscribererMockRecorder) ParseTaskResponded(arg0 any) *gomock.
 }
 
 // SubscribeToNewTasks mocks base method.
-func (m *MockAvsSubscriberer) SubscribeToNewTasks(arg0 chan *contractZRTaskManager.ContractZRTaskManagerNewTaskCreated) event.Subscription {
+func (m *MockAvsSubscriberer) SubscribeToNewTasks(arg0 chan *contractTaskManagerZR.ContractTaskManagerZRNewTaskCreated) event.Subscription {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SubscribeToNewTasks", arg0)
 	ret0, _ := ret[0].(event.Subscription)
@@ -70,7 +70,7 @@ func (mr *MockAvsSubscribererMockRecorder) SubscribeToNewTasks(arg0 any) *gomock
 }
 
 // SubscribeToTaskResponses mocks base method.
-func (m *MockAvsSubscriberer) SubscribeToTaskResponses(arg0 chan *contractZRTaskManager.ContractZRTaskManagerTaskResponded) event.Subscription {
+func (m *MockAvsSubscriberer) SubscribeToTaskResponses(arg0 chan *contractTaskManagerZR.ContractTaskManagerZRTaskResponded) event.Subscription {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SubscribeToTaskResponses", arg0)
 	ret0, _ := ret[0].(event.Subscription)

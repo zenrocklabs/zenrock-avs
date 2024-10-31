@@ -17,7 +17,7 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/zenrocklabs/zenrock-avs/aggregator/types"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	chainiomocks "github.com/zenrocklabs/zenrock-avs/core/chainio/mocks"
 )
 
@@ -85,8 +85,8 @@ func createMockAggregator(
 		logger:                logger,
 		avsWriter:             mockAvsWriter,
 		blsAggregationService: mockBlsAggregationService,
-		tasks:                 make(map[types.TaskId]cstaskmanager.ZRTaskManagerITask),
-		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse),
+		tasks:                 make(map[types.TaskId]cstaskmanager.ITaskManagerZRTask),
+		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse),
 	}
 	return aggregator, mockAvsWriter, mockBlsAggregationService, nil
 }
