@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	ethRpcClient, err := eth.NewClient("https://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/")
+	ethRpcClient, err := eth.NewClient("") // add RPC URL here
 	if err != nil {
 		panic(err)
 	}
@@ -37,9 +37,6 @@ func main() {
 	if _, err := stakeReg.AddStrategies(opts, 0, []IStakeRegistryStrategyParams{{
 		Strategy:   common.HexToAddress("0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9"), // proxy
 		Multiplier: big.NewInt(1000000000000000000),
-		// }, {
-		// 	Strategy:   common.HexToAddress("0xFb83e1D133D0157775eC4F19Ff81478Df1103305"), // implementation (probably don't need this one)
-		// 	Multiplier: big.NewInt(1000000000000000000),
 	}}); err != nil {
 		panic(err)
 	}
