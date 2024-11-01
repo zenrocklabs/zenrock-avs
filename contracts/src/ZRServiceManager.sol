@@ -105,7 +105,7 @@ contract ZRServiceManager is
         require(_operatorValidator[msg.sender] == validatorHash, "Not delegated to this validator");
         _;
     }
-
+ 
     /**
      * @notice Get the current balance of a delegation
      * @param validatorHash Hash of the validator address
@@ -204,6 +204,8 @@ contract ZRServiceManager is
         emit UndelegationInitiated(msg.sender, validatorHash, amount, delegation.pendingBalanceActivationHeight);
     }
 
+    function completeUndelegate() external nonReentrant updateBalance(keccak256(abi.encodePacked(validatorAddress)), msg.sender){}
+
     /**
      * @notice Cancel a pending undelegation
      * @param validatorAddress String address of the validator
@@ -234,6 +236,10 @@ contract ZRServiceManager is
         }
 
         emit UndelegationAnnulled(msg.sender, validatorHash, amount);
+    }
+
+    function getCurrentValidatorSet() public view returns(string[] memory){
+        return zrTaskManager.getLatestActiveSet();
     }
 
     // Helper functions used by the validator sidecar

@@ -71,4 +71,5 @@ interface ITaskManagerZR {
     ) external;
 
     function getTaskResponseWindowBlock() external view returns (uint32);
+    function getLatestActiveSet() external view returns (string[] memory);
 }
