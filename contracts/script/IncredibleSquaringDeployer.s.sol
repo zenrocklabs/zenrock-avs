@@ -20,8 +20,8 @@ import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {ZRServiceManager, IServiceManager} from "../src/ZRServiceManager.sol";
-import {ZRTaskManager} from "../src/ZRTaskManager.sol";
-import {ZRTaskManagerI} from "../src/interfaces/ZRTaskManagerI.sol";
+import {TaskManagerZR} from "../src/TaskManagerZR.sol";
+import {ITaskManagerZR} from "../src/interfaces/ITaskManagerZR.sol";
 import "../src/ERC20Mock.sol";
 
 import {Utils} from "./utils/Utils.sol";
@@ -70,8 +70,8 @@ contract IncredibleSquaringDeployer is Script, Utils {
     ZRServiceManager public incredibleSquaringServiceManager;
     IServiceManager public incredibleSquaringServiceManagerImplementation;
 
-    ZRTaskManager public incredibleSquaringTaskManager;
-    ZRTaskManagerI
+    TaskManagerZR public incredibleSquaringTaskManager;
+    ITaskManagerZR
         public incredibleSquaringTaskManagerImplementation;
 
     function run() external {
@@ -214,7 +214,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 )
             )
         );
-        incredibleSquaringTaskManager = ZRTaskManager(
+        incredibleSquaringTaskManager = TaskManagerZR(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -376,7 +376,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             address(incredibleSquaringServiceManagerImplementation)
         );
 
-        incredibleSquaringTaskManagerImplementation = new ZRTaskManager(
+        incredibleSquaringTaskManagerImplementation = new TaskManagerZR(
             registryCoordinator,
             TASK_RESPONSE_WINDOW_BLOCK
         );

@@ -18,7 +18,7 @@ import (
 	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 )
 
 const (
@@ -71,9 +71,9 @@ type Aggregator struct {
 	avsWriter        chainio.AvsWriterer
 	// aggregation related fields
 	blsAggregationService     blsagg.BlsAggregationService
-	tasks                     map[types.TaskId]cstaskmanager.ZRTaskManagerITask
+	tasks                     map[types.TaskId]cstaskmanager.ITaskManagerZRTask
 	tasksMu                   sync.RWMutex
-	taskResponses             map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse
+	taskResponses             map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse
 	taskResponsesMu           sync.RWMutex
 	currentTaskId             uint32
 	currentZrChainBlockHeight int64
@@ -117,8 +117,8 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
-		tasks:                 make(map[types.TaskId]cstaskmanager.ZRTaskManagerITask),
-		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZRTaskManagerITaskResponse),
+		tasks:                 make(map[types.TaskId]cstaskmanager.ITaskManagerZRTask),
+		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse),
 	}, nil
 }
 
@@ -202,10 +202,10 @@ func (agg *Aggregator) sendAggregatedResponseToContract(blsAggServiceResp blsagg
 // sendNewTask sends a new task to the task manager contract, and updates the Task dict struct
 // with the information of operators opted into quorum 0 at the block of task creation.
 func (agg *Aggregator) sendNewTask() error {
-	agg.logger.Info("Aggregator sending new task", "taskId", agg.currentTaskId, "zrChainBlockHeight", agg.currentZrChainBlockHeight)
+	agg.logger.Info("Aggregator sending new task", "taskId", agg.currentTaskId)
 
 	// Send task to the task manager contract
-	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, agg.currentZrChainBlockHeight, types.QUORUM_THRESHOLD_NUMERATOR, types.QUORUM_NUMBERS)
+	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, types.QUORUM_THRESHOLD_NUMERATOR, types.QUORUM_NUMBERS)
 	if err != nil {
 		agg.logger.Error("Aggregator failed to send new task", "err", err)
 		return err

@@ -3,7 +3,7 @@ pragma solidity >=0.8.2 <0.9.0;
 
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/ZRTaskManagerI.sol";
+import "./interfaces/ITaskManagerZR.sol";
 
 /**
  * @title ZRServiceManager
@@ -14,7 +14,7 @@ contract ZRServiceManager is
     ServiceManagerBase,
     ReentrancyGuard
 {
-    ZRTaskManagerI public immutable zrTaskManager;
+    ITaskManagerZR public immutable taskManagerZR;
     uint8 private immutable QUORUM_NUMBER;
     uint256 public immutable UNDELEGATION_PERIOD;
 
@@ -54,7 +54,7 @@ contract ZRServiceManager is
      * @param _avsDirectory Address of the AVS Directory contract
      * @param _registryCoordinator Address of the Registry Coordinator contract
      * @param _stakeRegistry Address of the Stake Registry contract
-     * @param _zrTaskManager Address of the ZRTaskManager contract
+     * @param _taskManagerZR Address of the ZRTaskManager contract
      * @param _undelegationPeriod Duration of the undelegation waiting period in blocks
      * @param _quorumNumber Used to identify the AVS quorum within the registries
      */
@@ -62,7 +62,7 @@ contract ZRServiceManager is
         IAVSDirectory _avsDirectory,
         IRegistryCoordinator _registryCoordinator,
         IStakeRegistry _stakeRegistry,
-        ZRTaskManagerI _zrTaskManager,
+        ITaskManagerZR _taskManagerZR,
         uint256 _undelegationPeriod,
         uint8 _quorumNumber
     ) 
@@ -73,7 +73,7 @@ contract ZRServiceManager is
             _stakeRegistry
         )
     {
-        zrTaskManager = _zrTaskManager;
+        taskManagerZR = _taskManagerZR;
         UNDELEGATION_PERIOD = _undelegationPeriod;
         QUORUM_NUMBER = _quorumNumber;
     }

@@ -3,12 +3,12 @@ package types
 import (
 	"errors"
 
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 )
 
 type TaskResponseData struct {
-	TaskResponse              cstaskmanager.ZRTaskManagerITaskResponse
-	TaskResponseMetadata      cstaskmanager.ZRTaskManagerITaskResponseMetadata
+	TaskResponse              cstaskmanager.ITaskManagerZRTaskResponse
+	TaskResponseMetadata      cstaskmanager.ITaskManagerZRTaskResponseMetadata
 	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
 }
 

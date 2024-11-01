@@ -17,9 +17,9 @@ import (
 	contractRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	bls "github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	types "github.com/Layr-Labs/eigensdk-go/types"
-	contractZRTaskManager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
 	common "github.com/ethereum/go-ethereum/common"
 	types0 "github.com/ethereum/go-ethereum/core/types"
+	contractTaskManagerZR "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -62,7 +62,7 @@ func (mr *MockAvsWritererMockRecorder) DeregisterOperator(arg0, arg1, arg2 any) 
 }
 
 // RaiseChallenge mocks base method.
-func (m *MockAvsWriterer) RaiseChallenge(arg0 context.Context, arg1 contractZRTaskManager.ZRTaskManagerITask, arg2 contractZRTaskManager.ZRTaskManagerITaskResponse, arg3 contractZRTaskManager.ZRTaskManagerITaskResponseMetadata, arg4 []contractZRTaskManager.BN254G1Point) (*types0.Receipt, error) {
+func (m *MockAvsWriterer) RaiseChallenge(arg0 context.Context, arg1 contractTaskManagerZR.ITaskManagerZRTask, arg2 contractTaskManagerZR.ITaskManagerZRTaskResponse, arg3 contractTaskManagerZR.ITaskManagerZRTaskResponseMetadata, arg4 []contractTaskManagerZR.BN254G1Point) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RaiseChallenge", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types0.Receipt)
@@ -92,7 +92,7 @@ func (mr *MockAvsWritererMockRecorder) RegisterOperatorInQuorumWithAVSRegistryCo
 }
 
 // SendAggregatedResponse mocks base method.
-func (m *MockAvsWriterer) SendAggregatedResponse(arg0 context.Context, arg1 contractZRTaskManager.ZRTaskManagerITask, arg2 contractZRTaskManager.ZRTaskManagerITaskResponse, arg3 contractZRTaskManager.IBLSSignatureCheckerNonSignerStakesAndSignature) (*types0.Receipt, error) {
+func (m *MockAvsWriterer) SendAggregatedResponse(arg0 context.Context, arg1 contractTaskManagerZR.ITaskManagerZRTask, arg2 contractTaskManagerZR.ITaskManagerZRTaskResponse, arg3 contractTaskManagerZR.IBLSSignatureCheckerNonSignerStakesAndSignature) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendAggregatedResponse", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*types0.Receipt)
@@ -107,19 +107,19 @@ func (mr *MockAvsWritererMockRecorder) SendAggregatedResponse(arg0, arg1, arg2, 
 }
 
 // SendNewTask mocks base method.
-func (m *MockAvsWriterer) SendNewTask(arg0 context.Context, arg1 uint32, arg2 int64, arg3 types.QuorumThresholdPercentage, arg4 types.QuorumNums) (contractZRTaskManager.ZRTaskManagerITask, uint32, error) {
+func (m *MockAvsWriterer) SendNewTask(arg0 context.Context, arg1 uint32, arg2 types.QuorumThresholdPercentage, arg3 types.QuorumNums) (contractTaskManagerZR.ITaskManagerZRTask, uint32, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendNewTask", arg0, arg1, arg2, arg3, arg4)
-	ret0, _ := ret[0].(contractZRTaskManager.ZRTaskManagerITask)
+	ret := m.ctrl.Call(m, "SendNewTask", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(contractTaskManagerZR.ITaskManagerZRTask)
 	ret1, _ := ret[1].(uint32)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
 // SendNewTask indicates an expected call of SendNewTask.
-func (mr *MockAvsWritererMockRecorder) SendNewTask(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockAvsWritererMockRecorder) SendNewTask(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendNewTask", reflect.TypeOf((*MockAvsWriterer)(nil).SendNewTask), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendNewTask", reflect.TypeOf((*MockAvsWriterer)(nil).SendNewTask), arg0, arg1, arg2, arg3)
 }
 
 // UpdateStakesOfEntireOperatorSetForQuorums mocks base method.

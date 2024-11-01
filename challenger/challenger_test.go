@@ -13,7 +13,7 @@ import (
 	aggtypes "github.com/zenrocklabs/zenrock-avs/aggregator/types"
 	"github.com/zenrocklabs/zenrock-avs/challenger/mocks"
 	chtypes "github.com/zenrocklabs/zenrock-avs/challenger/types"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	chainiomocks "github.com/zenrocklabs/zenrock-avs/core/chainio/mocks"
 	"go.uber.org/mock/gomock"
 )
@@ -39,7 +39,7 @@ func TestCallChallengeModule(t *testing.T) {
 	const TASK_INDEX = 1
 	const BLOCK_NUMBER = uint32(100)
 
-	challenger.tasks[TASK_INDEX] = cstaskmanager.ZRTaskManagerITask{
+	challenger.tasks[TASK_INDEX] = cstaskmanager.ITaskManagerZRTask{
 		// NumberToBeSquared:         big.NewInt(3),
 		TaskCreatedBlock:          1000,
 		QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
@@ -47,11 +47,11 @@ func TestCallChallengeModule(t *testing.T) {
 	}
 
 	challenger.taskResponses[TASK_INDEX] = chtypes.TaskResponseData{
-		TaskResponse: cstaskmanager.ZRTaskManagerITaskResponse{
+		TaskResponse: cstaskmanager.ITaskManagerZRTaskResponse{
 			ReferenceTaskId: TASK_INDEX,
 			// NumberSquared:      big.NewInt(2),
 		},
-		TaskResponseMetadata: cstaskmanager.ZRTaskManagerITaskResponseMetadata{
+		TaskResponseMetadata: cstaskmanager.ITaskManagerZRTaskResponseMetadata{
 			TaskResponsedBlock: 1001,
 			HashOfNonSigners:   [32]byte{},
 		},
@@ -81,7 +81,7 @@ func TestRaiseChallenge(t *testing.T) {
 	const TASK_INDEX = 1
 	const BLOCK_NUMBER = uint32(100)
 
-	challenger.tasks[TASK_INDEX] = cstaskmanager.ZRTaskManagerITask{
+	challenger.tasks[TASK_INDEX] = cstaskmanager.ITaskManagerZRTask{
 		// NumberToBeSquared:         big.NewInt(3),
 		TaskCreatedBlock:          1000,
 		QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
@@ -89,11 +89,11 @@ func TestRaiseChallenge(t *testing.T) {
 	}
 
 	challenger.taskResponses[TASK_INDEX] = chtypes.TaskResponseData{
-		TaskResponse: cstaskmanager.ZRTaskManagerITaskResponse{
+		TaskResponse: cstaskmanager.ITaskManagerZRTaskResponse{
 			ReferenceTaskId: TASK_INDEX,
 			// NumberSquared:      big.NewInt(9),
 		},
-		TaskResponseMetadata: cstaskmanager.ZRTaskManagerITaskResponseMetadata{
+		TaskResponseMetadata: cstaskmanager.ITaskManagerZRTaskResponseMetadata{
 			TaskResponsedBlock: 1001,
 			HashOfNonSigners:   [32]byte{},
 		},
@@ -121,7 +121,7 @@ func TestProcessTaskResponseLog(t *testing.T) {
 
 	const TASK_INDEX = 1
 
-	challenger.tasks[TASK_INDEX] = cstaskmanager.ZRTaskManagerITask{
+	challenger.tasks[TASK_INDEX] = cstaskmanager.ITaskManagerZRTask{
 		// NumberToBeSquared:         big.NewInt(3),
 		TaskCreatedBlock:          1000,
 		QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
@@ -129,18 +129,18 @@ func TestProcessTaskResponseLog(t *testing.T) {
 	}
 
 	challenger.taskResponses[TASK_INDEX] = chtypes.TaskResponseData{
-		TaskResponse: cstaskmanager.ZRTaskManagerITaskResponse{
+		TaskResponse: cstaskmanager.ITaskManagerZRTaskResponse{
 			ReferenceTaskId: TASK_INDEX,
 			// NumberSquared:      big.NewInt(9),
 		},
-		TaskResponseMetadata: cstaskmanager.ZRTaskManagerITaskResponseMetadata{
+		TaskResponseMetadata: cstaskmanager.ITaskManagerZRTaskResponseMetadata{
 			TaskResponsedBlock: 1001,
 			HashOfNonSigners:   [32]byte{},
 		},
 		NonSigningOperatorPubKeys: []cstaskmanager.BN254G1Point{},
 	}
 
-	taskResponseLog := cstaskmanager.ContractZRTaskManagerTaskResponded{
+	taskResponseLog := cstaskmanager.ContractTaskManagerZRTaskResponded{
 		TaskResponse:         challenger.taskResponses[TASK_INDEX].TaskResponse,
 		TaskResponseMetadata: challenger.taskResponses[TASK_INDEX].TaskResponseMetadata,
 		Raw: gethtypes.Log{
@@ -182,10 +182,10 @@ func createMockChallenger(mockCtrl *gomock.Controller) (*Challenger, *chainiomoc
 		avsReader:          mockAvsReader,
 		ethClient:          mockEthClient,
 		avsSubscriber:      mockAvsSubscriber,
-		tasks:              make(map[uint32]cstaskmanager.ZRTaskManagerITask),
+		tasks:              make(map[uint32]cstaskmanager.ITaskManagerZRTask),
 		taskResponses:      make(map[uint32]chtypes.TaskResponseData),
-		taskResponseChan:   make(chan *cstaskmanager.ContractZRTaskManagerTaskResponded),
-		newTaskCreatedChan: make(chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated),
+		taskResponseChan:   make(chan *cstaskmanager.ContractTaskManagerZRTaskResponded),
+		newTaskCreatedChan: make(chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated),
 	}
 	return challenger, mockAvsWriter, mockAvsReader, mockAvsSubscriber, mockEthClient, nil
 }

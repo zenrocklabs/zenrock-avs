@@ -2,18 +2,21 @@ package operator
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/zenrocklabs/zenrock-avs/aggregator"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	"github.com/zenrocklabs/zenrock-avs/core"
 	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 	"github.com/zenrocklabs/zenrock-avs/metrics"
 	"github.com/zenrocklabs/zenrock-avs/types"
+	"github.com/zenrocklabs/zenrock/tools/go-client"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -56,13 +59,15 @@ type Operator struct {
 	operatorId       sdktypes.OperatorId
 	operatorAddr     common.Address
 	// receive new tasks in this chan (typically from listening to onchain event)
-	newTaskCreatedChan chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated
+	newTaskCreatedChan chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated
 	// ip address of aggregator
 	aggregatorServerIpPortAddr string
 	// rpc client to send signed task responses to aggregator
 	aggregatorRpcClient AggregatorRpcClienter
 	// needed when opting in to avs (allow this service manager contract to slash operator)
 	credibleSquaringServiceManagerAddr common.Address
+	// zenrock chain client
+	zrChainClient *client.QueryClient
 }
 
 // TODO(samlaf): config is a mess right now, since the chainio client constructors
@@ -208,6 +213,11 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		return nil, err
 	}
 
+	zrChainClient, err := client.NewQueryClient("localhost:9090", true) // TODO: make configurable
+	if err != nil {
+		return nil, fmt.Errorf("Refresh Address Client: failed to get new client: %w", err)
+	}
+
 	operator := &Operator{
 		config:                             c,
 		logger:                             logger,
@@ -224,10 +234,10 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
 		aggregatorRpcClient:                aggregatorRpcClient,
-		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractZRTaskManagerNewTaskCreated),
+		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated),
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
-
+		zrChainClient:                      zrChainClient,
 	}
 
 	operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
@@ -306,25 +316,45 @@ func (o *Operator) Start(ctx context.Context) error {
 
 // ProcessNewTaskCreatedLog takes a NewTaskCreatedLog struct as input and returns a TaskResponse struct.
 // The TaskResponse struct is the struct that is signed and sent to the contract as a task response.
-func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZRTaskManagerNewTaskCreated) *cstaskmanager.ZRTaskManagerITaskResponse {
+func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractTaskManagerZRNewTaskCreated) *cstaskmanager.ITaskManagerZRTaskResponse {
 	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
 	o.logger.Info("Received new task",
 		"taskId", newTaskCreatedLog.Task.TaskId,
-		"zrChainBlockHeight", newTaskCreatedLog.Task.ZrChainBlockHeight,
 		"taskCreatedBlock", newTaskCreatedLog.Task.TaskCreatedBlock,
 		"quorumNumbers", newTaskCreatedLog.Task.QuorumNumbers,
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
+	var validatorAddresses []string
+	pageReq := &query.PageRequest{}
+
+	for {
+		resp, err := o.zrChainClient.ValidationQueryClient.ActiveSetValidators(context.Background(), pageReq)
+		if err != nil {
+			o.logger.Error("Error getting active set validators", "err", err)
+		}
+
+		for _, validator := range resp.Validators {
+			validatorAddresses = append(validatorAddresses, validator.OperatorAddress)
+		}
+
+		if resp.Pagination == nil || len(resp.Pagination.NextKey) == 0 {
+			break
+		}
+
+		pageReq.Key = resp.Pagination.NextKey
+	}
+
 	// Create the TaskResponse with the new structure
-	taskResponse := &cstaskmanager.ZRTaskManagerITaskResponse{
-		ReferenceTaskId: newTaskCreatedLog.Task.TaskId,
+	taskResponse := &cstaskmanager.ITaskManagerZRTaskResponse{
+		ReferenceTaskId:  newTaskCreatedLog.Task.TaskId,
+		ActiveSetZRChain: validatorAddresses,
 	}
 
 	return taskResponse
 }
 
-func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.ZRTaskManagerITaskResponse) (*aggregator.SignedTaskResponse, error) {
+func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.ITaskManagerZRTaskResponse) (*aggregator.SignedTaskResponse, error) {
 	taskResponseHash, err := core.GetTaskResponseDigest(taskResponse)
 	if err != nil {
 		o.logger.Error("Error getting task response header hash. skipping task (this is not expected and should be investigated)", "err", err)

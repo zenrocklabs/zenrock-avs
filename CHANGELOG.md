@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.0.1...v1.1.0) (2024-10-31)
+
+
+### Features
+
+* bridge active set via tasks ([72a88a5](https://github.com/zenrocklabs/zenrock-avs/commit/72a88a50d8e7c14e0730e532666cd728fd6a65d0))
+
 ## [1.0.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.0.0...v1.0.1) (2024-10-21)
 
 
