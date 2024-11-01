@@ -250,11 +250,6 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		operator.registerOperatorOnStartup(operatorEcdsaPrivateKey, common.HexToAddress(c.TokenStrategyAddr))
 	}
 
-	// if err := operator.DelegateServiceManager(operator.config.OperatorValidatorAddress, big.NewInt(100000000000000000)); err != nil {
-	// 	operator.logger.Fatal("Error delegating via service manager", "err", err)
-	// }
-	// operator.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
-
 	// OperatorId is set in contract during registration so we get it after registering operator.
 	operatorId, err := sdkClients.AvsRegistryChainReader.GetOperatorId(&bind.CallOpts{}, operator.operatorAddr)
 	if err != nil {

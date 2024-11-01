@@ -10,12 +10,13 @@ replace (
 
 require (
 	github.com/Layr-Labs/eigensdk-go v0.1.12
+	github.com/cosmos/cosmos-sdk v0.50.9
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/prometheus/client_golang v1.20.3
 	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.29.1
 	github.com/urfave/cli v1.22.14
-	github.com/zenrocklabs/zenrock/tools/go-client v0.0.0-00010101000000-000000000000
+	github.com/zenrocklabs/zenrock/tools/go-client v1.1.0
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.28.0
 )
@@ -54,7 +55,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/VictoriaMetrics/fastcache v1.12.2 // indirect
-	github.com/Zenrock-Foundation/zrchain/v4 v4.0.1 // indirect
+	github.com/Zenrock-Foundation/zrchain/v4 v4.0.2 // indirect
 	github.com/aws/aws-sdk-go v1.55.5 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
@@ -85,7 +86,6 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/cosmos-db v1.0.2 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5 // indirect
-	github.com/cosmos/cosmos-sdk v0.50.9 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
 	github.com/cosmos/gogoproto v1.7.0 // indirect
@@ -107,7 +107,7 @@ require (
 	github.com/dgraph-io/badger/v4 v4.3.0 // indirect
 	github.com/dgraph-io/ristretto v0.1.2-0.20240116140435-c67e07994f91 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/docker v25.0.3+incompatible // indirect
+	github.com/docker/docker v25.0.5+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
