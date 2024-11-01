@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.0...v1.1.1) (2024-11-01)
+
+
+### Bug Fixes
+
+* uncomment code `registration.go` + fix `go.mod` ([795c0b3](https://github.com/zenrocklabs/zenrock-avs/commit/795c0b301b143f499042204fe26d580b03a7844b))
+
 # [1.1.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.0.1...v1.1.0) (2024-10-31)
 
 
