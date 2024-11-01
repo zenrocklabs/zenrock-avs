@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.1...v1.1.2) (2024-11-01)
+
+
+### Bug Fixes
+
+* bump `go-client` version ([2f43dc3](https://github.com/zenrocklabs/zenrock-avs/commit/2f43dc381e2207bc85e0d9b87dc0ef19278e1cfc))
+
 ## [1.1.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.0...v1.1.1) (2024-11-01)
 
 
