@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.2...v1.1.3) (2024-11-01)
+
+
+### Bug Fixes
+
+* temporarily comment out go-client call code ([dcdd361](https://github.com/zenrocklabs/zenrock-avs/commit/dcdd36143489dfe71021f885eb7a065e6fa9e584))
+
 ## [1.1.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.1...v1.1.2) (2024-11-01)
 
 
