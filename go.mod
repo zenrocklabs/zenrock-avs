@@ -1,8 +1,12 @@
 module github.com/zenrocklabs/zenrock-avs
 
-go 1.23
+go 1.23.2
 
-toolchain go1.23.0
+replace (
+	cosmossdk.io/core => cosmossdk.io/core v0.11.0
+	github.com/Layr-Labs/eigensdk-go => github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775
+	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
+)
 
 require (
 	github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775

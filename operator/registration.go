@@ -34,21 +34,21 @@ func (o *Operator) registerOperatorOnStartup(
 	}
 
 	// TODO: shouldn't hardcode value here
-	// amount := big.NewInt(100000000000000000)
-	// if err := o.DepositIntoStrategy(tokenStrategyAddr, amount); err != nil {
-	// 	o.logger.Fatal("Error depositing into strategy", "err", err)
-	// }
-	// o.logger.Infof("Deposited %s into strategy %s", amount, tokenStrategyAddr)
+	amount := big.NewInt(100000000000000000)
+	if err := o.DepositIntoStrategy(tokenStrategyAddr, amount); err != nil {
+		o.logger.Fatal("Error depositing into strategy", "err", err)
+	}
+	o.logger.Infof("Deposited %s into strategy %s", amount, tokenStrategyAddr)
 
 	if err := o.RegisterOperatorWithAvs(operatorEcdsaPrivateKey); err != nil {
 		o.logger.Fatal("Error registering operator with avs", "err", err)
 	}
 	o.logger.Infof("Registered operator with avs")
 
-	// if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
-	// 	o.logger.Fatal("Error delegating via service manager", "err", err)
-	// }
-	// o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
+	if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
+		o.logger.Fatal("Error delegating via service manager", "err", err)
+	}
+	o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
 }
 
 func (o *Operator) DelegateServiceManager(validatorAddr string, amount *big.Int) error {
