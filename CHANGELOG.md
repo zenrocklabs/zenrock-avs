@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.3...v1.1.4) (2024-11-01)
+
+
+### Bug Fixes
+
+* use `go-client` from `zrchain/v5` ([eaa4e33](https://github.com/zenrocklabs/zenrock-avs/commit/eaa4e33a2a327a0010a90f47c41cf6df775dfc1c))
+
 ## [1.1.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.2...v1.1.3) (2024-11-01)
 
 
