@@ -2,10 +2,10 @@ package operator
 
 import (
 	"context"
-	// "fmt"
+	"fmt"
 	"os"
 
-	// "github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,7 +17,7 @@ import (
 	"github.com/zenrocklabs/zenrock-avs/metrics"
 	"github.com/zenrocklabs/zenrock-avs/types"
 
-	// "github.com/zenrocklabs/zenrock/tools/go-client"
+	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -68,7 +68,7 @@ type Operator struct {
 	// needed when opting in to avs (allow this service manager contract to slash operator)
 	credibleSquaringServiceManagerAddr common.Address
 	// zenrock chain client
-	// zrChainClient *client.QueryClient
+	zrChainClient *client.QueryClient
 }
 
 // TODO(samlaf): config is a mess right now, since the chainio client constructors
@@ -214,10 +214,10 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		return nil, err
 	}
 
-	// zrChainClient, err := client.NewQueryClient("localhost:9090", true) // TODO: make configurable
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Refresh Address Client: failed to get new client: %w", err)
-	// }
+	zrChainClient, err := client.NewQueryClient("localhost:9090", true) // TODO: make configurable
+	if err != nil {
+		return nil, fmt.Errorf("Refresh Address Client: failed to get new client: %w", err)
+	}
 
 	operator := &Operator{
 		config:                             c,
@@ -238,7 +238,7 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated),
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
-		// zrChainClient:                      zrChainClient,
+		zrChainClient:                      zrChainClient,
 	}
 
 	operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
@@ -321,30 +321,30 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	// var validatorAddresses []string
-	// pageReq := &query.PageRequest{}
+	var validatorAddresses []string
+	pageReq := &query.PageRequest{}
 
-	// for {
-	// 	resp, err := o.zrChainClient.ValidationQueryClient.ActiveSetValidators(context.Background(), pageReq)
-	// 	if err != nil {
-	// 		o.logger.Error("Error getting active set validators", "err", err)
-	// 	}
+	for {
+		resp, err := o.zrChainClient.ValidationQueryClient.ActiveSetValidators(context.Background(), pageReq)
+		if err != nil {
+			o.logger.Error("Error getting active set validators", "err", err)
+		}
 
-	// 	for _, validator := range resp.Validators {
-	// 		validatorAddresses = append(validatorAddresses, validator.OperatorAddress)
-	// 	}
+		for _, validator := range resp.Validators {
+			validatorAddresses = append(validatorAddresses, validator.OperatorAddress)
+		}
 
-	// 	if resp.Pagination == nil || len(resp.Pagination.NextKey) == 0 {
-	// 		break
-	// 	}
+		if resp.Pagination == nil || len(resp.Pagination.NextKey) == 0 {
+			break
+		}
 
-	// 	pageReq.Key = resp.Pagination.NextKey
-	// }
+		pageReq.Key = resp.Pagination.NextKey
+	}
 
 	// Create the TaskResponse with the new structure
 	taskResponse := &cstaskmanager.ITaskManagerZRTaskResponse{
-		ReferenceTaskId: newTaskCreatedLog.Task.TaskId,
-		// ActiveSetZRChain: validatorAddresses,
+		ReferenceTaskId:  newTaskCreatedLog.Task.TaskId,
+		ActiveSetZRChain: validatorAddresses,
 	}
 
 	return taskResponse
