@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.2.0...v1.2.1) (2024-11-06)
+
+
+### Bug Fixes
+
+* Dockerfile ([073bbb8](https://github.com/zenrocklabs/zenrock-avs/commit/073bbb8f5ca9eaeee5e5c6825c14ece0fe0e0aa1))
+
 # [1.2.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.4...v1.2.0) (2024-11-06)
 
 
