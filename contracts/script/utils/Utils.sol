@@ -3,25 +3,24 @@ pragma solidity =0.8.12;
 
 import "@eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 import "@eigenlayer/contracts/strategies/StrategyBase.sol";
-import "../../src/ERC20Mock.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
 
 contract Utils is Script {
     // Note that this fct will only work for the ERC20Mock that has a public mint function
-    function _mintTokens(
-        address strategyAddress,
-        address[] memory tos,
-        uint256[] memory amounts
-    ) internal {
-        for (uint256 i = 0; i < tos.length; i++) {
-            ERC20Mock underlyingToken = ERC20Mock(
-                address(StrategyBase(strategyAddress).underlyingToken())
-            );
-            underlyingToken.mint(tos[i], amounts[i]);
-        }
-    }
+    // function _mintTokens(
+    //     address strategyAddress,
+    //     address[] memory tos,
+    //     uint256[] memory amounts
+    // ) internal {
+    //     for (uint256 i = 0; i < tos.length; i++) {
+    //         ERC20Mock underlyingToken = ERC20Mock(
+    //             address(StrategyBase(strategyAddress).underlyingToken())
+    //         );
+    //         underlyingToken.mint(tos[i], amounts[i]);
+    //     }
+    // }
 
     function convertBoolToString(
         bool input

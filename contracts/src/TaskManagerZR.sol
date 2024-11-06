@@ -1,4 +1,4 @@
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.12;
 
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
@@ -9,7 +9,7 @@ import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinato
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
-import "./interfaces/ITaskManagerZR.sol";
+import "./ITaskManagerZR.sol";
 
 contract TaskManagerZR is
     Initializable,
@@ -21,44 +21,37 @@ contract TaskManagerZR is
 {
     using BN254 for BN254.G1Point;
 
-    /* CONSTANT */
+    /* CONSTANTS */
     uint32 public immutable TASK_RESPONSE_WINDOW_BLOCK;
     uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 10000;
-    uint256 internal constant _THRESHOLD_DENOMINATOR = 67;
+    uint256 private constant _THRESHOLD_DENOMINATOR = 67;
 
     /* STORAGE */
     uint32 public latestTaskId;
-
-    // mapping of task indices to all tasks hashes
-    // when a task is created, task hash is stored here,
-    // and responses need to pass the actual task,
-    // which is hashed onchain and checked against this mapping
-    mapping(uint32 => bytes32) public allTaskHashes;
-
-    // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
-    mapping(uint32 => bytes32) public allTaskResponses;
-
-    // mapping of task indices to validator addresses for that task
-    mapping(uint32 => string[]) public taskValidatorAddresses;
-
-    mapping(uint32 => bool) public taskSuccesfullyChallenged;
-
     address public aggregator;
     address public generator;
 
+    struct TaskData {
+        bytes32 taskHash;
+        bytes32 taskResponse;
+        bool challenged;
+        mapping(uint256 => string) validatorAddresses;
+        uint256 validatorCount;
+    }
+
+    mapping(uint32 => TaskData) private taskData;
+
     /* EVENTS */
-    event ValidatorAddressesStored(uint32 indexed taskId, string[] addresses);
+    event ValidatorAddressesStored(uint32 indexed taskId, uint256 count);
 
     /* MODIFIERS */
     modifier onlyAggregator() {
-        require(msg.sender == aggregator, "Aggregator must be the caller");
+        require(msg.sender == aggregator, "Not aggregator");
         _;
     }
 
-    // onlyTaskGenerator is used to restrict createNewTask from only being called by a permissioned entity
-    // in a real world scenario, this would be removed by instead making createNewTask a payable function
     modifier onlyTaskGenerator() {
-        require(msg.sender == generator, "Task generator must be the caller");
+        require(msg.sender == generator, "Not generator");
         _;
     }
 
@@ -86,15 +79,35 @@ contract TaskManagerZR is
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
-        Task memory newTask;
-        newTask.taskId = taskId;
-        newTask.taskCreatedBlock = uint32(block.number);
-        newTask.quorumThresholdPercentage = quorumThresholdPercentage;
-        newTask.quorumNumbers = quorumNumbers;
+        Task memory newTask = Task({
+            taskId: taskId,
+            taskCreatedBlock: uint32(block.number),
+            quorumThresholdPercentage: quorumThresholdPercentage,
+            quorumNumbers: quorumNumbers
+        });
 
-        allTaskHashes[taskId] = keccak256(abi.encode(newTask));
+        taskData[taskId].taskHash = keccak256(abi.encode(newTask));
         emit NewTaskCreated(taskId, newTask);
         latestTaskId = taskId;
+    }
+
+    function _storeValidatorAddresses(uint32 taskId, string[] calldata addresses) private {
+        uint256 length = addresses.length;
+        TaskData storage data = taskData[taskId];
+        for(uint256 i = 0; i < length; i++) {
+            data.validatorAddresses[i] = addresses[i];
+        }
+        data.validatorCount = length;
+        emit ValidatorAddressesStored(taskId, length);
+    }
+
+    function _getValidatorAddresses(uint32 taskId) private view returns (string[] memory) {
+        TaskData storage data = taskData[taskId];
+        string[] memory addresses = new string[](data.validatorCount);
+        for(uint256 i = 0; i < data.validatorCount; i++) {
+            addresses[i] = data.validatorAddresses[i];
+        }
+        return addresses;
     }
 
     function respondToTask(
@@ -102,75 +115,45 @@ contract TaskManagerZR is
         TaskResponse calldata taskResponse,
         NonSignerStakesAndSignature memory nonSignerStakesAndSignature
     ) external onlyAggregator {
-        uint32 taskCreatedBlock = task.taskCreatedBlock;
-        bytes calldata quorumNumbers = task.quorumNumbers;
-        uint32 quorumThresholdPercentage = task.quorumThresholdPercentage;
-
-        // check that the task is valid, hasn't been responsed yet, and is being responsed in time
+        TaskData storage data = taskData[task.taskId];
+        
+        require(data.taskHash == keccak256(abi.encode(task)), "Invalid task");
+        require(data.taskResponse == bytes32(0), "Already responded");
         require(
-            keccak256(abi.encode(task)) == allTaskHashes[task.taskId],
-            "supplied task does not match the one recorded in the contract"
-        );
-        require(
-            allTaskResponses[task.taskId] == bytes32(0),
-            "Aggregator has already responded to the task"
-        );
-        require(
-            uint32(block.number) <= taskCreatedBlock + TASK_RESPONSE_WINDOW_BLOCK,
-            "Aggregator has responded to the task too late"
+            block.number <= task.taskCreatedBlock + TASK_RESPONSE_WINDOW_BLOCK,
+            "Too late"
         );
 
-        /* CHECKING SIGNATURES & WHETHER THRESHOLD IS MET OR NOT */
-        // calculate message which operators signed
         bytes32 message = keccak256(abi.encode(taskResponse));
-
-        // check the aggregated BLS signature
         (
             QuorumStakeTotals memory quorumStakeTotals,
             bytes32 hashOfNonSigners
         ) = checkSignatures(
                 message,
-                quorumNumbers,
-                taskCreatedBlock,
+                task.quorumNumbers,
+                task.taskCreatedBlock,
                 nonSignerStakesAndSignature
             );
 
-        // check that signatories own at least a threshold percentage of each quourm
-        for (uint i = 0; i < quorumNumbers.length; i++) {
-            // we don't check that the quorumThresholdPercentages are not >100 because a greater value would trivially fail the check, implying
-            // signed stake > total stake
+        for (uint i = 0; i < task.quorumNumbers.length; i++) {
             require(
-                quorumStakeTotals.signedStakeForQuorum[i] *
-                    _THRESHOLD_DENOMINATOR >=
-                    quorumStakeTotals.totalStakeForQuorum[i] *
-                        uint8(quorumThresholdPercentage),
-                "Signatories do not own at least threshold percentage of a quorum"
+                quorumStakeTotals.signedStakeForQuorum[i] * _THRESHOLD_DENOMINATOR >=
+                quorumStakeTotals.totalStakeForQuorum[i] * task.quorumThresholdPercentage,
+                "Below threshold"
             );
         }
 
-        // Store the validator addresses
-        taskValidatorAddresses[task.taskId] = taskResponse.activeSetZRChain;
-        emit ValidatorAddressesStored(task.taskId, taskResponse.activeSetZRChain);
+        _storeValidatorAddresses(task.taskId, taskResponse.activeSetZRChain);
 
-        TaskResponseMetadata memory taskResponseMetadata = TaskResponseMetadata(
+        TaskResponseMetadata memory metadata = TaskResponseMetadata(
             uint32(block.number),
             hashOfNonSigners
         );
-        // updating the storage with task response
-        allTaskResponses[task.taskId] = keccak256(
-            abi.encode(taskResponse, taskResponseMetadata)
-        );
+        data.taskResponse = keccak256(abi.encode(taskResponse, metadata));
 
-        emit TaskResponded(taskResponse, taskResponseMetadata);
+        emit TaskResponded(taskResponse, metadata);
     }
 
-    function taskNumber() external view returns (uint32) {
-        return latestTaskId;
-    }
-
-    // NOTE: this function enables a challenger to raise and resolve a challenge.
-    // TODO: require challenger to pay a bond for raising a challenge
-    // TODO(samlaf): should we check that quorumNumbers is same as the one recorded in the task?
     function raiseAndResolveChallenge(
         Task calldata task,
         TaskResponse calldata taskResponse,
@@ -178,129 +161,36 @@ contract TaskManagerZR is
         BN254.G1Point[] memory pubkeysOfNonSigningOperators
     ) external {
         uint32 referenceTaskId = taskResponse.referenceTaskId;
+        TaskData storage data = taskData[referenceTaskId];
         
+        require(data.taskResponse != bytes32(0), "Not responded");
         require(
-            allTaskResponses[referenceTaskId] != bytes32(0),
-            "Task hasn't been responded to yet"
+            data.taskResponse == keccak256(abi.encode(taskResponse, taskResponseMetadata)),
+            "Invalid response"
         );
+        require(!data.challenged, "Already challenged");
         require(
-            allTaskResponses[referenceTaskId] ==
-                keccak256(abi.encode(taskResponse, taskResponseMetadata)),
-            "Task response does not match the one recorded in the contract"
-        );
-        require(
-            taskSuccesfullyChallenged[referenceTaskId] == false,
-            "The response to this task has already been challenged successfully."
-        );
-        require(
-            uint32(block.number) <=
-                taskResponseMetadata.taskResponsedBlock +
-                    TASK_CHALLENGE_WINDOW_BLOCK,
-            "The challenge period for this task has already expired."
+            block.number <= taskResponseMetadata.taskResponsedBlock + TASK_CHALLENGE_WINDOW_BLOCK,
+            "Challenge expired"
         );
 
-        // Verify that the taskId matches
-        require(
-            task.taskId == taskResponse.referenceTaskId,
-            "Task ID mismatch"
-        );
-
-        // get the list of hash of pubkeys of operators who weren't part of the task response submitted by the aggregator
-        bytes32[] memory hashesOfPubkeysOfNonSigningOperators = new bytes32[](
-            pubkeysOfNonSigningOperators.length
-        );
+        bytes32[] memory hashes = new bytes32[](pubkeysOfNonSigningOperators.length);
         for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
-            hashesOfPubkeysOfNonSigningOperators[i] = pubkeysOfNonSigningOperators[i].hashG1Point();
+            hashes[i] = pubkeysOfNonSigningOperators[i].hashG1Point();
         }
 
-        // verify whether the pubkeys of "claimed" non-signers supplied by challenger are actually non-signers as recorded before
-        // when the aggregator responded to the task
-        // currently inlined, as the MiddlewareUtils.computeSignatoryRecordHash function was removed from BLSSignatureChecker
-        // in this PR: https://github.com/Layr-Labs/eigenlayer-contracts/commit/c836178bf57adaedff37262dff1def18310f3dce#diff-8ab29af002b60fc80e3d6564e37419017c804ae4e788f4c5ff468ce2249b4386L155-L158
-        // TODO(samlaf): contracts team will add this function back in the BLSSignatureChecker, which we should use to prevent potential bugs from code duplication
-        bytes32 signatoryRecordHash = keccak256(
-            abi.encodePacked(
-                task.taskCreatedBlock,
-                hashesOfPubkeysOfNonSigningOperators
-            )
-        );
         require(
-            signatoryRecordHash == taskResponseMetadata.hashOfNonSigners,
-            "The pubkeys of non-signing operators supplied by the challenger are not correct."
+            keccak256(abi.encodePacked(task.taskCreatedBlock, hashes)) == 
+            taskResponseMetadata.hashOfNonSigners,
+            "Invalid non-signers"
         );
 
-        // get the address of operators who didn't sign
-        address[] memory addresssOfNonSigningOperators = new address[](
-            pubkeysOfNonSigningOperators.length
-        );
-        for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
-            addresssOfNonSigningOperators[i] = BLSApkRegistry(
-                address(blsApkRegistry)
-            ).pubkeyHashToOperator(hashesOfPubkeysOfNonSigningOperators[i]);
-        }
-
-        // @dev the below code is commented out for the upcoming M2 release
-        //      in which there will be no slashing. The slasher is also being redesigned
-        //      so its interface may very well change.
-        // ==========================================
-        // // get the list of all operators who were active when the task was initialized
-        // Operator[][] memory allOperatorInfo = getOperatorState(
-        //     IRegistryCoordinator(address(registryCoordinator)),
-        //     task.quorumNumbers,
-        //     task.taskCreatedBlock
-        // );
-        // // freeze the operators who signed adversarially
-        // for (uint i = 0; i < allOperatorInfo.length; i++) {
-        //     // first for loop iterate over quorums
-
-        //     for (uint j = 0; j < allOperatorInfo[i].length; j++) {
-        //         // second for loop iterate over operators active in the quorum when the task was initialized
-
-        //         // get the operator address
-        //         bytes32 operatorID = allOperatorInfo[i][j].operatorId;
-        //         address operatorAddress = BLSPubkeyRegistry(
-        //             address(blsPubkeyRegistry)
-        //         ).pubkeyCompendium().pubkeyHashToOperator(operatorID);
-
-        //         // check if the operator has already NOT been frozen
-        //         if (
-        //             IServiceManager(
-        //                 address(
-        //                     BLSRegistryCoordinatorWithIndices(
-        //                         address(registryCoordinator)
-        //                     ).serviceManager()
-        //                 )
-        //             ).slasher().isFrozen(operatorAddress) == false
-        //         ) {
-        //             // check whether the operator was a signer for the task
-        //             bool wasSigningOperator = true;
-        //             for (
-        //                 uint k = 0;
-        //                 k < addresssOfNonSigningOperators.length;
-        //                 k++
-        //             ) {
-        //                 if (
-        //                     operatorAddress == addresssOfNonSigningOperators[k]
-        //                 ) {
-        //                     // if the operator was a non-signer, then we set the flag to false
-        //                     wasSigningOperator == false;
-        //                     break;
-        //                 }
-        //             }
-
-        //             if (wasSigningOperator == true) {
-        //                 BLSRegistryCoordinatorWithIndices(
-        //                     address(registryCoordinator)
-        //                 ).serviceManager().freezeOperator(operatorAddress);
-        //             }
-        //         }
-        //     }
-        // }
-
-        // the task response has been challenged successfully
-        taskSuccesfullyChallenged[referenceTaskId] = true;
-
+        data.challenged = true;
         emit TaskChallengedSuccessfully(referenceTaskId, msg.sender);
+    }
+
+    function taskNumber() external view returns (uint32) {
+        return latestTaskId;
     }
 
     function getTaskResponseWindowBlock() external view returns (uint32) {
@@ -308,17 +198,18 @@ contract TaskManagerZR is
     }
 
     function getActiveSet(uint32 taskId) external view returns (string[] memory) {
-        return taskValidatorAddresses[taskId];
+        return _getValidatorAddresses(taskId);
     }
 
     function getLatestActiveSet() external view returns (string[] memory) {
-        return taskValidatorAddresses[latestTaskId];
+        return _getValidatorAddresses(latestTaskId);
     }
 
     function isValidatorInTaskSet(uint32 taskId, string memory validatorAddress) external view returns (bool) {
-        string[] memory validators = taskValidatorAddresses[taskId];
-        for (uint i = 0; i < validators.length; i++) {
-            if (keccak256(abi.encodePacked(validators[i])) == keccak256(abi.encodePacked(validatorAddress))) {
+        TaskData storage data = taskData[taskId];
+        for (uint256 i = 0; i < data.validatorCount; i++) {
+            if (keccak256(abi.encodePacked(data.validatorAddresses[i])) == 
+                keccak256(abi.encodePacked(validatorAddress))) {
                 return true;
             }
         }
