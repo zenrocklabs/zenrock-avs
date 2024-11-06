@@ -3,7 +3,7 @@ pragma solidity >=0.8.2 <0.9.0;
 
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./interfaces/ITaskManagerZR.sol";
+import "./ITaskManagerZR.sol";
 
 /**
  * @title ZRServiceManager

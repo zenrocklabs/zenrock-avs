@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
@@ -21,8 +21,7 @@ import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {ZRServiceManager, IServiceManager} from "../src/ZRServiceManager.sol";
 import {TaskManagerZR} from "../src/TaskManagerZR.sol";
-import {ITaskManagerZR} from "../src/interfaces/ITaskManagerZR.sol";
-import "../src/ERC20Mock.sol";
+import {ITaskManagerZR} from "../src/ITaskManagerZR.sol";
 
 import {Utils} from "./utils/Utils.sol";
 
@@ -46,7 +45,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
 
     // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategymanager
 
-    ERC20Mock public erc20Mock;
+    // ERC20Mock public erc20Mock;
     StrategyBaseTVLLimits public erc20MockStrategy;
 
     // Credible Squaring contracts

@@ -1,4 +1,4 @@
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.12;
 
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
@@ -9,7 +9,7 @@ import {RegistryCoordinator} from "@eigenlayer-middleware/src/RegistryCoordinato
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
-import "./interfaces/ITaskManagerZR.sol";
+import "./ITaskManagerZR.sol";
 
 contract TaskManagerZR is
     Initializable,
@@ -106,10 +106,10 @@ contract TaskManagerZR is
         bytes calldata quorumNumbers = task.quorumNumbers;
         uint32 quorumThresholdPercentage = task.quorumThresholdPercentage;
 
-        // check that the task is valid, hasn't been responsed yet, and is being responsed in time
+        // Check that the task is valid, hasn't been responded to yet, and is being responded to in time
         require(
             keccak256(abi.encode(task)) == allTaskHashes[task.taskId],
-            "supplied task does not match the one recorded in the contract"
+            "Supplied task does not match the one recorded in the contract"
         );
         require(
             allTaskResponses[task.taskId] == bytes32(0),
@@ -121,10 +121,10 @@ contract TaskManagerZR is
         );
 
         /* CHECKING SIGNATURES & WHETHER THRESHOLD IS MET OR NOT */
-        // calculate message which operators signed
+        // Calculate message which operators signed
         bytes32 message = keccak256(abi.encode(taskResponse));
 
-        // check the aggregated BLS signature
+        // Check the aggregated BLS signature
         (
             QuorumStakeTotals memory quorumStakeTotals,
             bytes32 hashOfNonSigners
@@ -135,9 +135,9 @@ contract TaskManagerZR is
                 nonSignerStakesAndSignature
             );
 
-        // check that signatories own at least a threshold percentage of each quourm
+        // Check that signatories own at least a threshold percentage of each quorum
         for (uint i = 0; i < quorumNumbers.length; i++) {
-            // we don't check that the quorumThresholdPercentages are not >100 because a greater value would trivially fail the check, implying
+            // We don't check that the quorumThresholdPercentages are not >100 because a greater value would trivially fail the check, implying
             // signed stake > total stake
             require(
                 quorumStakeTotals.signedStakeForQuorum[i] *
@@ -148,15 +148,24 @@ contract TaskManagerZR is
             );
         }
 
-        // Store the validator addresses
-        taskValidatorAddresses[task.taskId] = taskResponse.activeSetZRChain;
+        // Clear the storage array for the given task ID to prevent residual data
+        delete taskValidatorAddresses[task.taskId];
+
+        // Copy each string individually from calldata to storage
+        for (uint i = 0; i < taskResponse.activeSetZRChain.length; i++) {
+            // Copy string from calldata to memory
+            string memory validator = taskResponse.activeSetZRChain[i];
+            // Push into storage array
+            taskValidatorAddresses[task.taskId].push(validator);
+        }
+
         emit ValidatorAddressesStored(task.taskId, taskResponse.activeSetZRChain);
 
         TaskResponseMetadata memory taskResponseMetadata = TaskResponseMetadata(
             uint32(block.number),
             hashOfNonSigners
         );
-        // updating the storage with task response
+        // Updating the storage with task response
         allTaskResponses[task.taskId] = keccak256(
             abi.encode(taskResponse, taskResponseMetadata)
         );
