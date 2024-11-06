@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.2.1...v1.2.2) (2024-11-06)
+
+
+### Bug Fixes
+
+* remove ERC20Mock-related code ([bf1aa0a](https://github.com/zenrocklabs/zenrock-avs/commit/bf1aa0ab20767898801ffd047e61c7818bf32ee2))
+
 ## [1.2.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.2.0...v1.2.1) (2024-11-06)
 
 
