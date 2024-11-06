@@ -9,20 +9,14 @@ import (
 	"time"
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/urfave/cli"
-	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
@@ -104,27 +98,27 @@ func plugin(ctx *cli.Context) {
 		PromMetricsIpPortAddress:   avsConfig.EigenMetricsIpPortAddress,
 	}
 	logger, _ := logging.NewZapLogger(logging.Development)
-	ethHttpClient, err := eth.NewClient(avsConfig.EthRpcUrl)
-	if err != nil {
-		fmt.Println("can't connect to eth client")
-		fmt.Println(err)
-		return
-	}
-	chainID, err := ethHttpClient.ChainID(goCtx)
-	if err != nil {
-		fmt.Println("can't get chain id")
-		fmt.Println(err)
-		return
-	}
-	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
-		KeystorePath: avsConfig.EcdsaPrivateKeyStorePath,
-		Password:     ecdsaKeyPassword,
-	}, chainID)
-	if err != nil {
-		fmt.Println("can't create signer")
-		fmt.Println(err)
-		return
-	}
+	// ethHttpClient, err := eth.NewClient(avsConfig.EthRpcUrl)
+	// if err != nil {
+	// 	fmt.Println("can't connect to eth client")
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// chainID, err := ethHttpClient.ChainID(goCtx)
+	// if err != nil {
+	// 	fmt.Println("can't get chain id")
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
+	// 	KeystorePath: avsConfig.EcdsaPrivateKeyStorePath,
+	// 	Password:     ecdsaKeyPassword,
+	// }, chainID)
+	// if err != nil {
+	// 	fmt.Println("can't create signer")
+	// 	fmt.Println(err)
+	// 	return
+	// }
 	operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
 		avsConfig.EcdsaPrivateKeyStorePath,
 		ecdsaKeyPassword,
@@ -134,31 +128,31 @@ func plugin(ctx *cli.Context) {
 		return
 	}
 	clients, err := sdkclients.BuildAll(buildClientConfig, operatorEcdsaPrivateKey, logger)
-	avsReader, err := chainio.BuildAvsReader(
-		common.HexToAddress(avsConfig.AVSRegistryCoordinatorAddress),
-		common.HexToAddress(avsConfig.OperatorStateRetrieverAddress),
-		ethHttpClient,
-		logger,
-	)
+	// avsReader, err := chainio.BuildAvsReader(
+	// 	common.HexToAddress(avsConfig.AVSRegistryCoordinatorAddress),
+	// 	common.HexToAddress(avsConfig.OperatorStateRetrieverAddress),
+	// 	ethHttpClient,
+	// 	logger,
+	// )
 	if err != nil {
 		fmt.Println("can't create avs reader")
 		fmt.Println(err)
 		return
 	}
-	skWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, common.HexToAddress(avsConfig.OperatorAddress), logger)
-	if err != nil {
-		fmt.Println("can't create wallet")
-		fmt.Println(err)
-		return
-	}
-	txMgr := txmgr.NewSimpleTxManager(skWallet, ethHttpClient, logger, common.HexToAddress(avsConfig.OperatorAddress))
-	avsWriter, err := chainio.BuildAvsWriter(
-		txMgr,
-		common.HexToAddress(avsConfig.AVSRegistryCoordinatorAddress),
-		common.HexToAddress(avsConfig.OperatorStateRetrieverAddress),
-		ethHttpClient,
-		logger,
-	)
+	// skWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, common.HexToAddress(avsConfig.OperatorAddress), logger)
+	// if err != nil {
+	// 	fmt.Println("can't create wallet")
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// txMgr := txmgr.NewSimpleTxManager(skWallet, ethHttpClient, logger, common.HexToAddress(avsConfig.OperatorAddress))
+	// avsWriter, err := chainio.BuildAvsWriter(
+	// 	txMgr,
+	// 	common.HexToAddress(avsConfig.AVSRegistryCoordinatorAddress),
+	// 	common.HexToAddress(avsConfig.OperatorStateRetrieverAddress),
+	// 	ethHttpClient,
+	// 	logger,
+	// )
 	if err != nil {
 		fmt.Println("can't create avs reader")
 		fmt.Println(err)
@@ -201,32 +195,32 @@ func plugin(ctx *cli.Context) {
 			return
 		}
 		strategyAddr := common.HexToAddress(ctx.GlobalString(StrategyAddrFlag.Name))
-		_, tokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(&bind.CallOpts{}, strategyAddr)
-		if err != nil {
-			logger.Error("Failed to fetch strategy contract", "err", err)
-			return
-		}
-		contractErc20Mock, err := avsReader.GetErc20Mock(context.Background(), tokenAddr)
-		if err != nil {
-			logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-			return
-		}
-		txOpts, err := avsWriter.TxMgr.GetNoSendTxOpts()
-		if err != nil {
-			logger.Errorf("Error getting tx opts")
-			return
-		}
+		// _, tokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(&bind.CallOpts{}, strategyAddr)
+		// if err != nil {
+		// 	logger.Error("Failed to fetch strategy contract", "err", err)
+		// 	return
+		// }
+		// contractErc20Mock, err := avsReader.GetErc20Mock(context.Background(), tokenAddr)
+		// if err != nil {
+		// 	logger.Error("Failed to fetch ERC20Mock contract", "err", err)
+		// 	return
+		// }
+		// txOpts, err := avsWriter.TxMgr.GetNoSendTxOpts()
+		// if err != nil {
+		// 	logger.Errorf("Error getting tx opts")
+		// 	return
+		// }
 		amount := big.NewInt(1000)
-		tx, err := contractErc20Mock.Mint(txOpts, common.HexToAddress(avsConfig.OperatorAddress), amount)
-		if err != nil {
-			logger.Errorf("Error assembling Mint tx")
-			return
-		}
-		_, err = avsWriter.TxMgr.Send(context.Background(), tx)
-		if err != nil {
-			logger.Errorf("Error submitting Mint tx")
-			return
-		}
+		// tx, err := contractErc20Mock.Mint(txOpts, common.HexToAddress(avsConfig.OperatorAddress), amount)
+		// if err != nil {
+		// 	logger.Errorf("Error assembling Mint tx")
+		// 	return
+		// }
+		// _, err = avsWriter.TxMgr.Send(context.Background(), tx)
+		// if err != nil {
+		// 	logger.Errorf("Error submitting Mint tx")
+		// 	return
+		// }
 
 		_, err = clients.ElChainWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount)
 		if err != nil {

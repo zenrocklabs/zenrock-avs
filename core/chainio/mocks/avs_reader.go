@@ -17,7 +17,6 @@ import (
 	types "github.com/Layr-Labs/eigensdk-go/types"
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 	common "github.com/ethereum/go-ethereum/common"
-	contractERC20Mock "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ERC20Mock"
 	contractTaskManagerZR "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -73,21 +72,6 @@ func (m *MockAvsReaderer) GetCheckSignaturesIndices(arg0 *bind.CallOpts, arg1 ui
 func (mr *MockAvsReadererMockRecorder) GetCheckSignaturesIndices(arg0, arg1, arg2, arg3 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCheckSignaturesIndices", reflect.TypeOf((*MockAvsReaderer)(nil).GetCheckSignaturesIndices), arg0, arg1, arg2, arg3)
-}
-
-// GetErc20Mock mocks base method.
-func (m *MockAvsReaderer) GetErc20Mock(arg0 context.Context, arg1 common.Address) (*contractERC20Mock.ContractERC20Mock, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetErc20Mock", arg0, arg1)
-	ret0, _ := ret[0].(*contractERC20Mock.ContractERC20Mock)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetErc20Mock indicates an expected call of GetErc20Mock.
-func (mr *MockAvsReadererMockRecorder) GetErc20Mock(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetErc20Mock", reflect.TypeOf((*MockAvsReaderer)(nil).GetErc20Mock), arg0, arg1)
 }
 
 // GetOperatorAddrsInQuorumsAtCurrentBlock mocks base method.

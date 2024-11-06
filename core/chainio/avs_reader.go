@@ -10,7 +10,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	erc20mock "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ERC20Mock"
 	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 )
@@ -21,7 +20,7 @@ type AvsReaderer interface {
 	CheckSignatures(
 		ctx context.Context, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
 	) (cstaskmanager.IBLSSignatureCheckerQuorumStakeTotals, error)
-	GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error)
+	// GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error)
 }
 
 type AvsReader struct {
@@ -66,11 +65,11 @@ func (r *AvsReader) CheckSignatures(
 	return stakeTotalsPerQuorum, nil
 }
 
-func (r *AvsReader) GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error) {
-	erc20Mock, err := r.AvsServiceBindings.GetErc20Mock(tokenAddr)
-	if err != nil {
-		r.logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-		return nil, err
-	}
-	return erc20Mock, nil
-}
+// func (r *AvsReader) GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error) {
+// 	erc20Mock, err := r.AvsServiceBindings.GetErc20Mock(tokenAddr)
+// 	if err != nil {
+// 		r.logger.Error("Failed to fetch ERC20Mock contract", "err", err)
+// 		return nil, err
+// 	}
+// 	return erc20Mock, nil
+// }
