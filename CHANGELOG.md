@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.4...v1.2.0) (2024-11-06)
+
+
+### Bug Fixes
+
+* new task manager contract for testnet deployment ([05f9ea3](https://github.com/zenrocklabs/zenrock-avs/commit/05f9ea3e5d713cc1167d2c0da56d2a7e98f0c743))
+* reduce size of task manager contract ([f70aa5c](https://github.com/zenrocklabs/zenrock-avs/commit/f70aa5c7953bafad6f9ea1b2b68840a0d13d9632))
+* task manager ([d112e1b](https://github.com/zenrocklabs/zenrock-avs/commit/d112e1bb2379189c36e89f74a99eb8ff970bb1b7))
+
+
+### Features
+
+* improve task manager contract ([fcac103](https://github.com/zenrocklabs/zenrock-avs/commit/fcac103d323ac389dec4edc47e77ec60d69f1b93))
+
 ## [1.1.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.1.3...v1.1.4) (2024-11-01)
 
 
