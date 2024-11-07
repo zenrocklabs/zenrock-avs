@@ -1,3 +1,17 @@
+# [1.3.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.2.0...v1.3.0) (2024-11-07)
+
+
+### Bug Fixes
+
+* `registration.go` ([5d2efa5](https://github.com/zenrocklabs/zenrock-avs/commit/5d2efa5ecf4cac9617165fb59cfe6bf5e49b266b))
+* remove ERC20Mock-related code ([423e2d0](https://github.com/zenrocklabs/zenrock-avs/commit/423e2d0163e7778925d456f648535f23ba5e8a0c))
+* remove ERC20Mock-related code ([bf1aa0a](https://github.com/zenrocklabs/zenrock-avs/commit/bf1aa0ab20767898801ffd047e61c7818bf32ee2))
+
+
+### Features
+
+* force new tag version ([7e7b416](https://github.com/zenrocklabs/zenrock-avs/commit/7e7b41621a1dfd19fdbfdfdc420e356d2fc9cfa2))
+
 ## [1.2.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.2.0...v1.2.1) (2024-11-07)
 
 
