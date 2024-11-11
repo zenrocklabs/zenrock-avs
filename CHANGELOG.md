@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.0...v1.3.1) (2024-11-11)
+
+
+### Bug Fixes
+
+* aggregator + registration flow ([7942310](https://github.com/zenrocklabs/zenrock-avs/commit/7942310301a9e3a62a4a2c4009b119369eecb3fe))
+
 # [1.3.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.2.0...v1.3.0) (2024-11-07)
 
 
