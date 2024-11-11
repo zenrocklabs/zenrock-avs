@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.1...v1.3.2) (2024-11-11)
+
+
+### Bug Fixes
+
+* increase task cadence to 15min ([09ce915](https://github.com/zenrocklabs/zenrock-avs/commit/09ce915d1707cc19eeebcc4e458ff92b9b65dd4f))
+
 ## [1.3.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.0...v1.3.1) (2024-11-11)
 
 
