@@ -20,8 +20,8 @@ func AbiEncodeTaskResponse(h *cstaskmanager.ITaskManagerZRTaskResponse) ([]byte,
 			Type: "uint32",
 		},
 		{
-			Name: "zrChainBlockHeight",
-			Type: "int64",
+			Name: "activeSetZRChain",
+			Type: "string[]",
 		},
 	})
 	if err != nil {

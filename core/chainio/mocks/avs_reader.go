@@ -74,6 +74,21 @@ func (mr *MockAvsReadererMockRecorder) GetCheckSignaturesIndices(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCheckSignaturesIndices", reflect.TypeOf((*MockAvsReaderer)(nil).GetCheckSignaturesIndices), arg0, arg1, arg2, arg3)
 }
 
+// GetLatestTaskNumber mocks base method.
+func (m *MockAvsReaderer) GetLatestTaskNumber(arg0 context.Context) (uint32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLatestTaskNumber", arg0)
+	ret0, _ := ret[0].(uint32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLatestTaskNumber indicates an expected call of GetLatestTaskNumber.
+func (mr *MockAvsReadererMockRecorder) GetLatestTaskNumber(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLatestTaskNumber", reflect.TypeOf((*MockAvsReaderer)(nil).GetLatestTaskNumber), arg0)
+}
+
 // GetOperatorAddrsInQuorumsAtCurrentBlock mocks base method.
 func (m *MockAvsReaderer) GetOperatorAddrsInQuorumsAtCurrentBlock(arg0 *bind.CallOpts, arg1 types.QuorumNums) ([][]common.Address, error) {
 	m.ctrl.T.Helper()

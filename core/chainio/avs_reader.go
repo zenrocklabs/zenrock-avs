@@ -20,6 +20,7 @@ type AvsReaderer interface {
 	CheckSignatures(
 		ctx context.Context, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
 	) (cstaskmanager.IBLSSignatureCheckerQuorumStakeTotals, error)
+	GetLatestTaskNumber(ctx context.Context) (uint32, error)
 	// GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error)
 }
 
@@ -63,6 +64,14 @@ func (r *AvsReader) CheckSignatures(
 		return cstaskmanager.IBLSSignatureCheckerQuorumStakeTotals{}, err
 	}
 	return stakeTotalsPerQuorum, nil
+}
+
+func (r *AvsReader) GetLatestTaskNumber(ctx context.Context) (uint32, error) {
+	latestTask, err := r.AvsServiceBindings.TaskManager.LatestTaskId(&bind.CallOpts{})
+	if err != nil {
+		return 0, err
+	}
+	return latestTask, nil
 }
 
 // func (r *AvsReader) GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error) {

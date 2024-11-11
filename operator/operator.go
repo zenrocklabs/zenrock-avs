@@ -241,15 +241,15 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		zrChainClient:                      zrChainClient,
 	}
 
-	operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
-	if err != nil {
-		logger.Error("Error checking if operator is registered", "err", err)
-		return nil, err
-	}
-	if !operatorIsRegistered {
-		logger.Info("Operator is not registered. Registering operator...")
-		operator.registerOperatorOnStartup(operatorEcdsaPrivateKey, common.HexToAddress(c.TokenStrategyAddr))
-	}
+	// operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
+	// if err != nil {
+	// 	logger.Error("Error checking if operator is registered", "err", err)
+	// 	return nil, err
+	// }
+	// if !operatorIsRegistered {
+	// logger.Info("Operator is not registered. Registering operator...")
+	operator.registerOperatorOnStartup(operatorEcdsaPrivateKey, common.HexToAddress(c.TokenStrategyAddr))
+	// }
 
 	// OperatorId is set in contract during registration so we get it after registering operator.
 	operatorId, err := sdkClients.AvsRegistryChainReader.GetOperatorId(&bind.CallOpts{}, operator.operatorAddr)

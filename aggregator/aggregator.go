@@ -29,7 +29,7 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 	avsName                  = "zenrock"
 
-	taskCadence = 1000 * time.Second
+	taskCadence = 15 * time.Second
 )
 
 // Aggregator sends tasks (numbers to square) onchain, then listens for operator signed TaskResponses.
@@ -69,14 +69,14 @@ type Aggregator struct {
 	logger           logging.Logger
 	serverIpPortAddr string
 	avsWriter        chainio.AvsWriterer
+	avsReader        chainio.AvsReaderer
 	// aggregation related fields
-	blsAggregationService     blsagg.BlsAggregationService
-	tasks                     map[types.TaskId]cstaskmanager.ITaskManagerZRTask
-	tasksMu                   sync.RWMutex
-	taskResponses             map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse
-	taskResponsesMu           sync.RWMutex
-	currentTaskId             uint32
-	currentZrChainBlockHeight int64
+	blsAggregationService blsagg.BlsAggregationService
+	tasks                 map[types.TaskId]cstaskmanager.ITaskManagerZRTask
+	tasksMu               sync.RWMutex
+	taskResponses         map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse
+	taskResponsesMu       sync.RWMutex
+	currentTaskId         uint32
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
@@ -116,6 +116,7 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		logger:                c.Logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		avsWriter:             avsWriter,
+		avsReader:             avsReader,
 		blsAggregationService: blsAggregationService,
 		tasks:                 make(map[types.TaskId]cstaskmanager.ITaskManagerZRTask),
 		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse),
@@ -133,13 +134,12 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 	defer ticker.Stop()
 
 	// Initialize currentTaskId
-	agg.currentTaskId = 0
-	agg.currentZrChainBlockHeight = 0 // TODO: get the actual zrChain block height
-
-	// Send the first task
-	_ = agg.sendNewTask()
-	agg.currentTaskId++
-	agg.currentZrChainBlockHeight++ // TODO: get the actual zrChain block height
+	latestTaskNumber, err := agg.avsReader.GetLatestTaskNumber(ctx)
+	if err != nil {
+		agg.logger.Error("Failed to get latest task number", "err", err)
+		return err
+	}
+	agg.currentTaskId = latestTaskNumber + 1
 
 	for {
 		select {
@@ -153,7 +153,6 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 				continue
 			}
 			agg.currentTaskId++
-			agg.currentZrChainBlockHeight++ // TODO: get the actual zrChain block height
 		}
 	}
 }

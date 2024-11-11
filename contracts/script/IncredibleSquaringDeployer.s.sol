@@ -33,10 +33,10 @@ import "forge-std/console.sol";
 // # To deploy and verify our contract
 // forge script script/CredibleSquaringDeployer.s.sol:CredibleSquaringDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
 contract IncredibleSquaringDeployer is Script, Utils {
-    // DEPLOYMENT CONSTANTS
-    uint256 public constant QUORUM_THRESHOLD_PERCENTAGE = 100;
-    uint32 public constant TASK_RESPONSE_WINDOW_BLOCK = 30;
-    uint32 public constant TASK_DURATION_BLOCKS = 0;
+    // DEPLOYMENT CONSTANTS // TODO: change these? Some aren't currently used
+    uint256 public constant QUORUM_THRESHOLD_PERCENTAGE = 67;
+    uint32 public constant TASK_RESPONSE_WINDOW_BLOCK = 300;
+    uint32 public constant TASK_DURATION_BLOCKS = 300;
     // TODO: right now hardcoding these
     address public constant AGGREGATOR_ADDR =
         0xE1ca337e0a0839717ef86cdA53C51b08FE681e9c;
