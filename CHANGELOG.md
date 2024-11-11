@@ -1,3 +1,10 @@
+## [1.3.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.2...v1.3.3) (2024-11-11)
+
+
+### Bug Fixes
+
+* aggregator log text ([374b8e8](https://github.com/zenrocklabs/zenrock-avs/commit/374b8e83f5a0a13cf45098f136e8d43d77a6803e))
+
 ## [1.3.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.1...v1.3.2) (2024-11-11)
 
 
