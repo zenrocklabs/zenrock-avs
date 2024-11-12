@@ -28,7 +28,7 @@ func (o *Operator) registerOperatorOnStartup(
 ) {
 	if err := o.RegisterOperatorWithEigenlayer(); err != nil {
 		// This error might only be that the operator was already registered with eigenlayer, so we don't want to fatal
-		o.logger.Error("Error registering operator with eigenlayer", "err", err)
+		o.logger.Debug("Error registering operator with eigenlayer", "err", err)
 	} else {
 		o.logger.Infof("Registered operator with eigenlayer")
 	}
@@ -36,19 +36,19 @@ func (o *Operator) registerOperatorOnStartup(
 	// TODO: shouldn't hardcode value here
 	amount := big.NewInt(100000000000000000)
 	if err := o.DepositIntoStrategy(tokenStrategyAddr, amount); err != nil {
-		o.logger.Error("Error depositing into strategy", "err", err)
+		o.logger.Debug("Error depositing into strategy", "err", err)
 	} else {
 		o.logger.Infof("Deposited %s into strategy %s", amount, tokenStrategyAddr)
 	}
 
 	if err := o.RegisterOperatorWithAvs(operatorEcdsaPrivateKey); err != nil {
-		o.logger.Error("Error registering operator with avs", "err", err)
+		o.logger.Debug("Error registering operator with avs", "err", err)
 	} else {
 		o.logger.Infof("Registered operator with avs")
 	}
 
 	if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
-		o.logger.Error("Error delegating via service manager", "err", err)
+		o.logger.Debug("Error delegating via service manager", "err", err)
 	} else {
 		o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
 	}
@@ -69,7 +69,7 @@ func (o *Operator) DelegateServiceManager(validatorAddr string, amount *big.Int)
 
 	tx, err := serviceManager.Delegate(txOpts, validatorAddr, amount)
 	if err != nil {
-		o.logger.Errorf("Error assembling Delegate tx")
+		o.logger.Debug("Error creating Delegate tx")
 		return err
 	}
 
@@ -86,7 +86,7 @@ func (o *Operator) RegisterOperatorWithEigenlayer() error {
 		EarningsReceiverAddress: o.operatorAddr.String(),
 	}
 	if _, err := o.eigenlayerWriter.RegisterAsOperator(context.Background(), op); err != nil {
-		o.logger.Error("Error registering operator with eigenlayer", "err", err)
+		o.logger.Debug("Error registering operator with eigenlayer", "err", err)
 		return err
 	}
 	return nil
@@ -94,7 +94,7 @@ func (o *Operator) RegisterOperatorWithEigenlayer() error {
 
 func (o *Operator) DepositIntoStrategy(strategyAddr common.Address, amount *big.Int) error {
 	if _, err := o.eigenlayerWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount); err != nil {
-		o.logger.Errorf("Error depositing into strategy", "err", err)
+		o.logger.Debug("Error depositing into strategy", "err", err)
 		return err
 	}
 	return nil
@@ -126,7 +126,7 @@ func (o *Operator) RegisterOperatorWithAvs(
 		o.blsKeypair, quorumNumbers, socket,
 	)
 	if err != nil {
-		o.logger.Errorf("Unable to register operator with avs registry coordinator")
+		o.logger.Debug("Unable to register operator with avs registry coordinator")
 		return err
 	}
 	o.logger.Infof("Registered operator with avs registry coordinator.")
