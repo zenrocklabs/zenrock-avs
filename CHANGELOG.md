@@ -1,3 +1,10 @@
+## [1.3.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.3...v1.3.4) (2024-11-12)
+
+
+### Bug Fixes
+
+* set registration error logs to debug level ([ecc9380](https://github.com/zenrocklabs/zenrock-avs/commit/ecc938037091080d179560e4e0eb0271020a76d0))
+
 ## [1.3.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.2...v1.3.3) (2024-11-11)
 
 
