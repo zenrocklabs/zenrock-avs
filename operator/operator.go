@@ -214,7 +214,7 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		return nil, err
 	}
 
-	zrChainClient, err := client.NewQueryClient("localhost:9090", true) // TODO: make configurable
+	zrChainClient, err := client.NewQueryClient(c.ZRChainRPCAddress, true)
 	if err != nil {
 		return nil, fmt.Errorf("Refresh Address Client: failed to get new client: %w", err)
 	}

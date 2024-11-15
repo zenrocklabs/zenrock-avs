@@ -5,6 +5,7 @@ type NodeConfig struct {
 	Production                    bool   `yaml:"production"`
 	OperatorAddress               string `yaml:"operator_address"`
 	OperatorValidatorAddress      string `yaml:"operator_validator_address"`
+	ZRChainRPCAddress             string `yaml:"zr_chain_rpc_address"`
 	OperatorStateRetrieverAddress string `yaml:"operator_state_retriever_address"`
 	AVSRegistryCoordinatorAddress string `yaml:"avs_registry_coordinator_address"`
 	TokenStrategyAddr             string `yaml:"token_strategy_addr"`
