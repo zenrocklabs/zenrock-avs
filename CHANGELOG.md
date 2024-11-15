@@ -1,3 +1,10 @@
+## [1.3.5](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.4...v1.3.5) (2024-11-15)
+
+
+### Bug Fixes
+
+* make zrchain addr configurable ([077b0ce](https://github.com/zenrocklabs/zenrock-avs/commit/077b0ce3a13e51bc407320d937cbc3dd4a203a9b))
+
 ## [1.3.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.3...v1.3.4) (2024-11-12)
 
 
