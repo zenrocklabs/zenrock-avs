@@ -1,3 +1,10 @@
+## [1.3.6](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.5...v1.3.6) (2024-11-18)
+
+
+### Bug Fixes
+
+* generate random salt for registration ([f9c407b](https://github.com/zenrocklabs/zenrock-avs/commit/f9c407b0f0e7adb988881b3cf03a2a4db4eb7917))
+
 ## [1.3.5](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.4...v1.3.5) (2024-11-15)
 
 
