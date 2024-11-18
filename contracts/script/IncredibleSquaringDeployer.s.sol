@@ -39,9 +39,9 @@ contract IncredibleSquaringDeployer is Script, Utils {
     uint32 public constant TASK_DURATION_BLOCKS = 300;
     // TODO: right now hardcoding these
     address public constant AGGREGATOR_ADDR =
-        0xE1ca337e0a0839717ef86cdA53C51b08FE681e9c;
+        0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
     address public constant TASK_GENERATOR_ADDR =
-        0xE1ca337e0a0839717ef86cdA53C51b08FE681e9c;
+        0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
 
     // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategymanager
 

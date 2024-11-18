@@ -8,6 +8,7 @@ package operator
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -34,7 +35,7 @@ func (o *Operator) registerOperatorOnStartup(
 	}
 
 	// TODO: shouldn't hardcode value here
-	amount := big.NewInt(100000000000000000)
+	amount := big.NewInt(10000000000000000)
 	if err := o.DepositIntoStrategy(tokenStrategyAddr, amount); err != nil {
 		o.logger.Debug("Error depositing into strategy", "err", err)
 	} else {
@@ -104,10 +105,13 @@ func (o *Operator) DepositIntoStrategy(strategyAddr common.Address, amount *big.
 func (o *Operator) RegisterOperatorWithAvs(
 	operatorEcdsaKeyPair *ecdsa.PrivateKey,
 ) error {
-	// TODO: shouldn't hardcode values here
 	quorumNumbers := eigenSdkTypes.QuorumNums{eigenSdkTypes.QuorumNum(0)}
 	socket := "Not Needed"
-	operatorToAvsRegistrationSigSalt := [32]byte{123}
+	operatorToAvsRegistrationSigSalt := [32]byte{}
+	if _, err := rand.Read(operatorToAvsRegistrationSigSalt[:]); err != nil {
+		o.logger.Errorf("Failed to generate random salt: %v", err)
+		return err
+	}
 	curBlockNum, err := o.ethClient.BlockNumber(context.Background())
 	if err != nil {
 		o.logger.Errorf("Unable to get current block number")
