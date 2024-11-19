@@ -73,9 +73,9 @@ contract IncredibleSquaringDeployer is Script, Utils {
         // Get Eigenlayer contracts
         string memory eigenlayerDeployedContracts = readOutput("eigenlayer_deployment_output");
         
-        IStrategyManager strategyManager = IStrategyManager(
-            stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.strategyManager")
-        );
+        // IStrategyManager strategyManager = IStrategyManager(
+        //     stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.strategyManager")
+        // );
         IDelegationManager delegationManager = IDelegationManager(
             stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.delegation")
         );

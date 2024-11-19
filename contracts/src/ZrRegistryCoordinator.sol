@@ -339,9 +339,9 @@ contract ZrRegistryCoordinator is
         // - all quorums should exist (checked against `quorumCount` in orderedBytesArrayToBitmap)
         // - there should be no duplicates in `quorumNumbers`
         // - there should be one list of operators per quorum
-        uint192 quorumBitmap = uint192(
-            BitmapUtils.orderedBytesArrayToBitmap(quorumNumbers, quorumCount)
-        );
+        // uint192 quorumBitmap = uint192(
+        //     BitmapUtils.orderedBytesArrayToBitmap(quorumNumbers, quorumCount)
+        // );
         require(
             operatorsPerQuorum.length == quorumNumbers.length,
             "RegCoord.updateOperatorsForQuorum: input length mismatch"
