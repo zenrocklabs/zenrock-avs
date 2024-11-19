@@ -19,9 +19,7 @@ import {IndexRegistry} from "@eigenlayer-middleware/src/IndexRegistry.sol";
 import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
-import {ZRServiceManager, IServiceManager} from "../src/ZRServiceManager.sol";
-import {TaskManagerZR} from "../src/TaskManagerZR.sol";
-import {ITaskManagerZR} from "../src/ITaskManagerZR.sol";
+import {ZrServiceManager, IServiceManager} from "../src/ZrServiceManager.sol";
 
 import {Utils} from "./utils/Utils.sol";
 
@@ -66,12 +64,8 @@ contract IncredibleSquaringDeployer is Script, Utils {
 
     OperatorStateRetriever public operatorStateRetriever;
 
-    ZRServiceManager public incredibleSquaringServiceManager;
+    ZrServiceManager public incredibleSquaringServiceManager;
     IServiceManager public incredibleSquaringServiceManagerImplementation;
-
-    TaskManagerZR public incredibleSquaringTaskManager;
-    ITaskManagerZR
-        public incredibleSquaringTaskManagerImplementation;
 
     function run() external {
         // Eigenlayer contracts
@@ -204,16 +198,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
          * First, deploy upgradeable proxy contracts that **will point** to the implementations. Since the implementation contracts are
          * not yet deployed, we give these proxies an empty contract as the initial implementation, to act as if they have no code.
          */
-        incredibleSquaringServiceManager = ZRServiceManager(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(incredibleSquaringProxyAdmin),
-                    ""
-                )
-            )
-        );
-        incredibleSquaringTaskManager = TaskManagerZR(
+        incredibleSquaringServiceManager = ZrServiceManager(
             address(
                 new TransparentUpgradeableProxy(
                     address(emptyContract),
@@ -359,11 +344,10 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        incredibleSquaringServiceManagerImplementation = new ZRServiceManager(
+        incredibleSquaringServiceManagerImplementation = new ZrServiceManager(
             avsDirectory,
             registryCoordinator,
             stakeRegistry,
-            incredibleSquaringTaskManager,
             100_000,
             0
         );
@@ -375,40 +359,25 @@ contract IncredibleSquaringDeployer is Script, Utils {
             address(incredibleSquaringServiceManagerImplementation)
         );
 
-        incredibleSquaringTaskManagerImplementation = new TaskManagerZR(
-            registryCoordinator,
-            TASK_RESPONSE_WINDOW_BLOCK
-        );
-
-        // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
-        incredibleSquaringProxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(
-                payable(address(incredibleSquaringTaskManager))
-            ),
-            address(incredibleSquaringTaskManagerImplementation),
-            abi.encodeWithSelector(
-                incredibleSquaringTaskManager.initialize.selector,
-                incredibleSquaringPauserReg,
-                incredibleSquaringCommunityMultisig,
-                AGGREGATOR_ADDR,
-                TASK_GENERATOR_ADDR
-            )
-        );
+        // incredibleSquaringProxyAdmin.upgradeAndCall(
+        //     TransparentUpgradeableProxy(
+        //         payable(address(incredibleSquaringTaskManager))
+        //     ),
+        //     address(incredibleSquaringTaskManagerImplementation),
+        //     abi.encodeWithSelector(
+        //         incredibleSquaringTaskManager.initialize.selector,
+        //         incredibleSquaringPauserReg,
+        //         incredibleSquaringCommunityMultisig,
+        //         AGGREGATOR_ADDR,
+        //         TASK_GENERATOR_ADDR
+        //     )
+        // );
 
         // WRITE JSON DATA
         string memory parent_object = "parent object";
 
         string memory deployed_addresses = "addresses";
-        // vm.serializeAddress(
-        //     deployed_addresses,
-        //     "erc20Mock",
-        //     address(erc20Mock)
-        // );
-        // vm.serializeAddress(
-        //     deployed_addresses,
-        //     "erc20MockStrategy",
-        //     address(erc20MockStrategy)
-        // );
+
         vm.serializeAddress(
             deployed_addresses,
             "credibleSquaringServiceManager",
@@ -418,16 +387,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
             deployed_addresses,
             "credibleSquaringServiceManagerImplementation",
             address(incredibleSquaringServiceManagerImplementation)
-        );
-        vm.serializeAddress(
-            deployed_addresses,
-            "credibleSquaringTaskManager",
-            address(incredibleSquaringTaskManager)
-        );
-        vm.serializeAddress(
-            deployed_addresses,
-            "credibleSquaringTaskManagerImplementation",
-            address(incredibleSquaringTaskManagerImplementation)
         );
         vm.serializeAddress(
             deployed_addresses,
