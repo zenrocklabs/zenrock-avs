@@ -45,7 +45,7 @@ interface IZRTaskManager {
     struct TaskResponse {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskId;
-        string[] activeSetZRChain;
+        string[] inactiveSetZRChain;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -73,5 +73,4 @@ interface IZRTaskManager {
     ) external;
 
     function getTaskResponseWindowBlock() external view returns (uint32);
-    function getLatestActiveSet() external view returns (string[] memory);
 }

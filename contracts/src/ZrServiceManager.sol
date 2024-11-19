@@ -15,6 +15,8 @@ import {BLSApkRegistry} from "../lib/eigenlayer-middleware/src/BLSApkRegistry.so
 import {BLSSignatureChecker, IRegistryCoordinator} from "../lib/eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "../lib/eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
+import {IServiceManager} from "../lib/eigenlayer-middleware/src/interfaces/IServiceManager.sol";
+
 import "./interfaces/IZrServiceManager.sol";
 import "./interfaces/IZRTaskManager.sol";
 
