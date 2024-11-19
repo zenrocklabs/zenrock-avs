@@ -174,6 +174,7 @@ contract ZrRegistryCoordinator is
         }
     }
 
+
     /**
      * @notice Registers msg.sender as an operator for one or more quorums. If any quorum reaches its maximum operator
      * capacity, `operatorKickParams` is used to replace an old operator with the new one.
@@ -185,7 +186,7 @@ contract ZrRegistryCoordinator is
      * @param operatorSignature is the signature of the operator used by the AVS to register the operator in the delegation manager
      * @dev `params` is ignored if the caller has previously registered a public key
      * @dev `operatorSignature` is ignored if the operator's status is already REGISTERED
-     */
+     */   
     function registerOperatorWithChurn(
         bytes calldata quorumNumbers,
         string calldata socket,
@@ -200,16 +201,8 @@ contract ZrRegistryCoordinator is
             "RegCoord.registerOperatorWithChurn: input length mismatch"
         );
 
-        /**
-         * If the operator has NEVER registered a pubkey before, use `params` to register
-         * their pubkey in blsApkRegistry
-         *
-         * If the operator HAS registered a pubkey, `params` is ignored and the pubkey hash
-         * (operatorId) is fetched instead
-         */
         bytes32 operatorId = _getOrCreateOperatorId(msg.sender, params);
 
-        // Verify the churn approver's signature for the registering operator and kick params
         _verifyChurnApproverSignature({
             registeringOperator: msg.sender,
             registeringOperatorId: operatorId,
@@ -217,10 +210,30 @@ contract ZrRegistryCoordinator is
             churnApproverSignature: churnApproverSignature
         });
 
-        // Register the operator in each of the registry contracts and update the operator's
-        // quorum bitmap and registration status
+        // Pass the original calldata to internal functions
+        _handleChurnRegistration(
+            operatorId,
+            msg.sender,
+            quorumNumbers,
+            socket,
+            validatorAddr,
+            operatorKickParams,
+            operatorSignature
+        );
+    }
+
+    // Internal function now takes separate parameters instead of struct
+    function _handleChurnRegistration(
+        bytes32 operatorId,
+        address operator,
+        bytes calldata quorumNumbers,
+        string calldata socket,
+        string calldata validatorAddr,
+        OperatorKickParam[] calldata operatorKickParams,
+        SignatureWithSaltAndExpiry memory operatorSignature
+    ) internal {
         RegisterResults memory results = _registerOperator({
-            operator: msg.sender,
+            operator: operator,
             operatorId: operatorId,
             quorumNumbers: quorumNumbers,
             socket: socket,
@@ -228,33 +241,41 @@ contract ZrRegistryCoordinator is
             operatorSignature: operatorSignature
         });
 
-        // Check that each quorum's operator count is below the configured maximum. If the max
-        // is exceeded, use `operatorKickParams` to deregister an existing operator to make space
-        for (uint256 i = 0; i < quorumNumbers.length; i++) {
-            OperatorSetParam memory operatorSetParams = _quorumParams[
-                uint8(quorumNumbers[i])
-            ];
+        _processOperatorKicks(
+            results,
+            operator,
+            quorumNumbers,
+            operatorKickParams
+        );
+    }
 
-            /**
-             * If the new operator count for any quorum exceeds the maximum, validate
-             * that churn can be performed, then deregister the specified operator
-             */
-            if (
-                results.numOperatorsPerQuorum[i] >
-                operatorSetParams.maxOperatorCount
-            ) {
+    // Modify _processOperatorKicks to take separate parameters
+    function _processOperatorKicks(
+        RegisterResults memory results,
+        address operator,
+        bytes calldata quorumNumbers,
+        OperatorKickParam[] calldata operatorKickParams
+    ) internal {
+        for (uint256 i = 0; i < quorumNumbers.length; i++) {
+            uint8 quorumNumber = uint8(quorumNumbers[i]);
+            OperatorSetParam memory operatorSetParams = _quorumParams[quorumNumber];
+
+            if (results.numOperatorsPerQuorum[i] > operatorSetParams.maxOperatorCount) {
                 _validateChurn({
-                    quorumNumber: uint8(quorumNumbers[i]),
+                    quorumNumber: quorumNumber,
                     totalQuorumStake: results.totalStakes[i],
-                    newOperator: msg.sender,
+                    newOperator: operator,
                     newOperatorStake: results.operatorStakes[i],
                     kickParams: operatorKickParams[i],
                     setParams: operatorSetParams
                 });
 
+                bytes memory singleQuorum = new bytes(1);
+                singleQuorum[0] = bytes1(quorumNumber);
+                
                 _deregisterOperator(
                     operatorKickParams[i].operator,
-                    quorumNumbers[i:i + 1]
+                    singleQuorum
                 );
             }
         }
@@ -505,17 +526,47 @@ contract ZrRegistryCoordinator is
         string memory validatorAddr,
         SignatureWithSaltAndExpiry memory operatorSignature
     ) internal virtual returns (RegisterResults memory results) {
-        /**
-         * Get bitmap of quorums to register for and operator's current bitmap. Validate that:
-         * - we're trying to register for at least 1 quorum
-         * - the quorums we're registering for exist (checked against `quorumCount` in orderedBytesArrayToBitmap)
-         * - the operator is not currently registered for any quorums we're registering for
-         * Then, calculate the operator's new bitmap after registration
-         */
+        // Split registration logic into smaller functions to avoid stack too deep
+        _validateRegistrationInputs(operator, operatorId, quorumNumbers);
+        
         uint192 quorumsToAdd = uint192(
             BitmapUtils.orderedBytesArrayToBitmap(quorumNumbers, quorumCount)
         );
         uint192 currentBitmap = _currentOperatorBitmap(operatorId);
+        uint192 newBitmap = uint192(currentBitmap.plus(quorumsToAdd));
+
+        _processRegistration(
+            operator,
+            operatorId,
+            socket,
+            validatorAddr,
+            operatorSignature,
+            newBitmap
+        );
+
+        // Register with each registry contract separately
+        results = _processRegistryUpdates(
+            operator,
+            operatorId,
+            quorumNumbers
+        );
+
+        return results;
+    }
+
+    /**
+     * @dev Validates the registration inputs
+     */
+    function _validateRegistrationInputs(
+        address operator,
+        bytes32 operatorId,
+        bytes calldata quorumNumbers
+    ) internal view {
+        uint192 quorumsToAdd = uint192(
+            BitmapUtils.orderedBytesArrayToBitmap(quorumNumbers, quorumCount)
+        );
+        uint192 currentBitmap = _currentOperatorBitmap(operatorId);
+        
         require(
             !quorumsToAdd.isEmpty(),
             "RegCoord._registerOperator: bitmap cannot be 0"
@@ -524,30 +575,31 @@ contract ZrRegistryCoordinator is
             quorumsToAdd.noBitsInCommon(currentBitmap),
             "RegCoord._registerOperator: operator already registered for some quorums"
         );
-        uint192 newBitmap = uint192(currentBitmap.plus(quorumsToAdd));
-
-        // Check that the operator can reregister if ejected
         require(
-            lastEjectionTimestamp[operator] + ejectionCooldown <
-                block.timestamp,
+            lastEjectionTimestamp[operator] + ejectionCooldown < block.timestamp,
             "RegCoord._registerOperator: operator cannot reregister yet"
         );
+    }
 
-        /**
-         * Update operator's bitmap, socket, and status. Only update operatorInfo if needed:
-         * if we're `REGISTERED`, the operatorId and status are already correct.
-         */
-        _updateOperatorBitmap({operatorId: operatorId, newBitmap: newBitmap});
+    /**
+     * @dev Processes the main registration updates
+     */
+    function _processRegistration(
+        address operator,
+        bytes32 operatorId,
+        string memory socket,
+        string memory validatorAddr,
+        SignatureWithSaltAndExpiry memory operatorSignature,
+        uint192 newBitmap
+    ) internal {
+        _updateOperatorBitmap(operatorId, newBitmap);
 
-        // If the operator wasn't registered for any quorums, update their status
-        // and register them with this AVS in EigenLayer core (DelegationManager)
         if (_operatorInfo[operator].status != OperatorStatus.REGISTERED) {
             _operatorInfo[operator] = OperatorInfo({
                 operatorId: operatorId,
                 status: OperatorStatus.REGISTERED
             });
 
-            // Register the operator with the EigenLayer core contracts via this AVS's ServiceManager
             serviceManager.registerOperatorToAVS(
                 operator,
                 validatorAddr,
@@ -558,8 +610,16 @@ contract ZrRegistryCoordinator is
 
             emit OperatorRegistered(operator, operatorId);
         }
+    }
 
-        // Register the operator with the BLSApkRegistry, StakeRegistry, and IndexRegistry
+    /**
+     * @dev Updates all registry contracts
+     */
+    function _processRegistryUpdates(
+        address operator,
+        bytes32 operatorId,
+        bytes calldata quorumNumbers
+    ) internal returns (RegisterResults memory results) {
         blsApkRegistry.registerOperator(operator, quorumNumbers);
         (results.operatorStakes, results.totalStakes) = stakeRegistry
             .registerOperator(operator, operatorId, quorumNumbers);
