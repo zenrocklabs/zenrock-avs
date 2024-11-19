@@ -3,28 +3,30 @@ pragma solidity ^0.8.21;
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-import "@eigenlayer/contracts/permissions/PauserRegistry.sol";
-import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
-import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
-import {IStrategyManager, IStrategy} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
-import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
+import {PauserRegistry} from "../lib/eigenlayer-contracts/src/contracts/permissions/PauserRegistry.sol";
+import {IDelegationManager} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IDelegationManager.sol";
+import {IAVSDirectory} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
+import {IStrategyManager, IStrategy} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
+import {StrategyBase} from "../lib/eigenlayer-contracts/src/contracts/strategies/StrategyBase.sol";
 import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
-import {StrategyBaseTVLLimits} from "@eigenlayer/contracts/strategies/StrategyBaseTVLLimits.sol";
-import {IRewardsCoordinator} from "eigenlayer-contracts/src/contracts/interfaces/IRewardsCoordinator.sol";
+import {StrategyBaseTVLLimits} from "../lib/eigenlayer-contracts/src/contracts/strategies/StrategyBaseTVLLimits.sol";
+import {IRewardsCoordinator} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IRewardsCoordinator.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 
-import {IBLSApkRegistry} from "@eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
-import {IIndexRegistry} from "@eigenlayer-middleware/src/interfaces/IIndexRegistry.sol";
-import {IStakeRegistry} from "@eigenlayer-middleware/src/interfaces/IStakeRegistry.sol";
-import {ISocketRegistry} from "@eigenlayer-middleware/src/interfaces/ISocketRegistry.sol";
-import {BLSApkRegistry} from "@eigenlayer-middleware/src/BLSApkRegistry.sol";
-import {IndexRegistry} from "@eigenlayer-middleware/src/IndexRegistry.sol";
-import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
-import {SocketRegistry} from "@eigenlayer-middleware/src/SocketRegistry.sol";
-import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
+import {IBLSApkRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
+import {IIndexRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IIndexRegistry.sol";
+import {IStakeRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IStakeRegistry.sol";
+import {ISocketRegistry} from "../lib/eigenlayer-middleware/src/interfaces/ISocketRegistry.sol";
+import {BLSApkRegistry} from "../lib/eigenlayer-middleware/src/BLSApkRegistry.sol";
+import {IndexRegistry} from "../lib/eigenlayer-middleware/src/IndexRegistry.sol";
+import {StakeRegistry} from "../lib/eigenlayer-middleware/src/StakeRegistry.sol";
+import {SocketRegistry} from "../lib/eigenlayer-middleware/src/SocketRegistry.sol";
+import {OperatorStateRetriever} from "../lib/eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {ZrServiceManager} from "../src/ZrServiceManager.sol";
 import {ZrRegistryCoordinator} from "../src/ZrRegistryCoordinator.sol";
+
+import {IRegistryCoordinator} from "../lib/eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 
 import {Utils} from "./utils/Utils.sol";
 
@@ -228,11 +230,11 @@ contract IncredibleSquaringDeployer is Script, Utils {
 
         {
             uint numQuorums = 1;
-            ZrRegistryCoordinator.OperatorSetParam[] memory quorumsOperatorSetParams = new ZrRegistryCoordinator.OperatorSetParam[](numQuorums);
+            IRegistryCoordinator.OperatorSetParam[] memory quorumsOperatorSetParams = new IRegistryCoordinator.OperatorSetParam[](numQuorums);
             
             for (uint i = 0; i < numQuorums; i++) {
-                quorumsOperatorSetParams[i] = ZrRegistryCoordinator.OperatorSetParam({
-                    maxOperatorCount: 75,
+                quorumsOperatorSetParams[i] = IRegistryCoordinator.OperatorSetParam({
+                    maxOperatorCount: 10000,
                     kickBIPsOfOperatorStake: 15000,
                     kickBIPsOfTotalStake: 100
                 });

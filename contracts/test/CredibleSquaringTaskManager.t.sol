@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-// pragma solidity ^0.8.12;
+// pragma solidity ^0.8.21;
 
 // import "../src/ZrServiceManager.sol" as incsqsm;
 // import {TaskManagerZR} from "../src/TaskManagerZR.sol";
