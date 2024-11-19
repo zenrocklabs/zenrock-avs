@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.21;
 library ZrServiceManagerLib {
     struct Validator {
         string validatorAddr;

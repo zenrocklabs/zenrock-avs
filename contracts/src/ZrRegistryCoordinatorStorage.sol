@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.21;
 
 import {IBLSApkRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
 import {IStakeRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IStakeRegistry.sol";

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.21;
 
 /**
  * @dev Collection of common custom errors used in multiple contracts

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.21;
 
 import {ZrServiceManagerLib} from "../libraries/ZrServiceManagerLib.sol";
 import {ISignatureUtils} from "../../lib/eigenlayer-contracts/src/contracts/interfaces/ISignatureUtils.sol";

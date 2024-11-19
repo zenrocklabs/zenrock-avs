@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL
 // SPDX-FileCopyrightText: 2024 Zenrock labs Ltd.
-pragma solidity 0.8.28;
+pragma solidity 0.8.21;
 
 import "../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
