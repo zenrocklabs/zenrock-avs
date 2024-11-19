@@ -7,6 +7,7 @@ import {IBLSApkRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IBLSA
 import {IStakeRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IStakeRegistry.sol";
 import {IIndexRegistry} from "../lib/eigenlayer-middleware/src/interfaces/IIndexRegistry.sol";
 import {ISocketRegistry} from "../lib/eigenlayer-middleware/src/interfaces/ISocketRegistry.sol";
+import {IRegistryCoordinator} from "../lib/eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 
 import {EIP1271SignatureUtils} from "../lib/eigenlayer-contracts/src/contracts/libraries/EIP1271SignatureUtils.sol";
 import {BitmapUtils} from "../lib/eigenlayer-middleware/src/libraries/BitmapUtils.sol";
