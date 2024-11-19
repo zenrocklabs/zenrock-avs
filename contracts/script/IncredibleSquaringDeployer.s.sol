@@ -43,7 +43,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
     
     address public constant AGGREGATOR_ADDR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
     address public constant TASK_GENERATOR_ADDR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
-    address public constant REWARDS_INITIATOR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
+    // address public constant REWARDS_INITIATOR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
 
     // Contract instances
     ProxyAdmin public incredibleSquaringProxyAdmin;
@@ -82,9 +82,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
         IAVSDirectory avsDirectory = IAVSDirectory(
             stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.avsDirectory")
         );
-        IRewardsCoordinator rewardsCoordinator = IRewardsCoordinator(
-            stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.rewardsCoordinator")
-        );
 
         address incredibleSquaringCommunityMultisig = msg.sender;
         address incredibleSquaringPauser = msg.sender;
@@ -97,7 +94,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
         _deployIncredibleSquaringContracts(
             delegationManager,
             avsDirectory,
-            rewardsCoordinator,
             wethStrat,
             incredibleSquaringCommunityMultisig,
             incredibleSquaringPauser
@@ -109,7 +105,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
     function _deployIncredibleSquaringContracts(
         IDelegationManager delegationManager,
         IAVSDirectory avsDirectory,
-        IRewardsCoordinator rewardsCoordinator,
         IStrategy strat,
         address incredibleSquaringCommunityMultisig,
         address credibleSquaringPauser
@@ -273,7 +268,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
         // Deploy and initialize ServiceManager
         incredibleSquaringServiceManagerImplementation = new ZrServiceManager(
             avsDirectory,
-            rewardsCoordinator,
+            IRewardsCoordinator(address(0x1A17df4170099577b79038Fd310f3ff62F79752E)),
             ZrRegistryCoordinator(address(registryCoordinator)),
             IStakeRegistry(address(stakeRegistry))
         );
@@ -287,7 +282,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 incredibleSquaringCommunityMultisig,
                 AGGREGATOR_ADDR,
                 TASK_GENERATOR_ADDR,
-                REWARDS_INITIATOR,
+                // REWARDS_INITIATOR,
                 TASK_RESPONSE_WINDOW_BLOCK
             )
         );

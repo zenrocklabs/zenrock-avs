@@ -113,11 +113,11 @@ contract ZrServiceManager is
         address _initialOwner,
         address _aggregator,
         address _generator,
-        address _rewardsInitiator,
+        // address _rewardsInitiator,
         uint32 _taskResponseWindowBlock
     ) public initializer {
         _initializePauser(_pauserRegistry, UNPAUSE_ALL);
-        __ZrServiceManager_init(_initialOwner, _rewardsInitiator);
+        __ZrServiceManager_init(_initialOwner); //, _rewardsInitiator);
         ZrServiceManagerStorage storage $ = _getZrServiceManagerStorage();
 
         $.aggregator = _aggregator;
@@ -126,10 +126,10 @@ contract ZrServiceManager is
     }
 
     function __ZrServiceManager_init(
-        address _initialOwner,
-        address _rewardsInitiator
+        address _initialOwner
+        // address _rewardsInitiator
     ) internal virtual onlyInitializing {
-        __ServiceManagerBase_init(_initialOwner, _rewardsInitiator);
+        __ServiceManagerBase_init(_initialOwner); //, _rewardsInitiator);
     }
 
     function registerOperatorToAVS(

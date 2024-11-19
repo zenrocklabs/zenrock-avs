@@ -31,17 +31,17 @@ abstract contract ZrServiceManagerBase is ZrServiceManagerBaseStorage {
     }
 
     /// @notice only rewardsInitiator can call createAVSRewardsSubmission
-    modifier onlyRewardsInitiator() {
-        _checkRewardsInitiator();
-        _;
-    }
+    // modifier onlyRewardsInitiator() {
+    //     _checkRewardsInitiator();
+    //     _;
+    // }
 
-    function _checkRewardsInitiator() internal view {
-        require(
-            msg.sender == rewardsInitiator,
-            "ServiceManagerBase.onlyRewardsInitiator: caller is not the rewards initiator"
-        );
-    }
+    // function _checkRewardsInitiator() internal view {
+    //     require(
+    //         msg.sender == rewardsInitiator,
+    //         "ServiceManagerBase.onlyRewardsInitiator: caller is not the rewards initiator"
+    //     );
+    // }
 
     /// @notice Sets the (immutable) `_registryCoordinator` address
     constructor(
@@ -61,11 +61,11 @@ abstract contract ZrServiceManagerBase is ZrServiceManagerBaseStorage {
     }
 
     function __ServiceManagerBase_init(
-        address initialOwner,
-        address _rewardsInitiator
+        address initialOwner
+        // address _rewardsInitiator
     ) internal virtual onlyInitializing {
         _transferOwnership(initialOwner);
-        _setRewardsInitiator(_rewardsInitiator);
+        // _setRewardsInitiator(_rewardsInitiator);
     }
 
     /**
@@ -91,7 +91,7 @@ abstract contract ZrServiceManagerBase is ZrServiceManagerBaseStorage {
     function createAVSRewardsSubmission(IRewardsCoordinator.RewardsSubmission[] calldata rewardsSubmissions)
         public
         virtual
-        onlyRewardsInitiator
+        // onlyRewardsInitiator
     {
         for (uint256 i = 0; i < rewardsSubmissions.length; ++i) {
             // transfer token to ServiceManager and approve RewardsCoordinator to transfer again
@@ -132,14 +132,14 @@ abstract contract ZrServiceManagerBase is ZrServiceManagerBaseStorage {
      * @param newRewardsInitiator The new rewards initiator address
      * @dev only callable by the owner
      */
-    function setRewardsInitiator(address newRewardsInitiator) external onlyOwner {
-        _setRewardsInitiator(newRewardsInitiator);
-    }
+    // function setRewardsInitiator(address newRewardsInitiator) external onlyOwner {
+    //     _setRewardsInitiator(newRewardsInitiator);
+    // }
 
-    function _setRewardsInitiator(address newRewardsInitiator) internal {
-        emit RewardsInitiatorUpdated(rewardsInitiator, newRewardsInitiator);
-        rewardsInitiator = newRewardsInitiator;
-    }
+    // function _setRewardsInitiator(address newRewardsInitiator) internal {
+    //     emit RewardsInitiatorUpdated(rewardsInitiator, newRewardsInitiator);
+    //     rewardsInitiator = newRewardsInitiator;
+    // }
 
     /**
      * @notice Returns the list of strategies that the AVS supports for restaking
