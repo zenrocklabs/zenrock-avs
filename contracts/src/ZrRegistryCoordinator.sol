@@ -526,47 +526,17 @@ contract ZrRegistryCoordinator is
         string memory validatorAddr,
         SignatureWithSaltAndExpiry memory operatorSignature
     ) internal virtual returns (RegisterResults memory results) {
-        // Split registration logic into smaller functions to avoid stack too deep
-        _validateRegistrationInputs(operator, operatorId, quorumNumbers);
-        
+        /**
+         * Get bitmap of quorums to register for and operator's current bitmap. Validate that:
+         * - we're trying to register for at least 1 quorum
+         * - the quorums we're registering for exist (checked against `quorumCount` in orderedBytesArrayToBitmap)
+         * - the operator is not currently registered for any quorums we're registering for
+         * Then, calculate the operator's new bitmap after registration
+         */
         uint192 quorumsToAdd = uint192(
             BitmapUtils.orderedBytesArrayToBitmap(quorumNumbers, quorumCount)
         );
         uint192 currentBitmap = _currentOperatorBitmap(operatorId);
-        uint192 newBitmap = uint192(currentBitmap.plus(quorumsToAdd));
-
-        _processRegistration(
-            operator,
-            operatorId,
-            socket,
-            validatorAddr,
-            operatorSignature,
-            newBitmap
-        );
-
-        // Register with each registry contract separately
-        results = _processRegistryUpdates(
-            operator,
-            operatorId,
-            quorumNumbers
-        );
-
-        return results;
-    }
-
-    /**
-     * @dev Validates the registration inputs
-     */
-    function _validateRegistrationInputs(
-        address operator,
-        bytes32 operatorId,
-        bytes calldata quorumNumbers
-    ) internal view {
-        uint192 quorumsToAdd = uint192(
-            BitmapUtils.orderedBytesArrayToBitmap(quorumNumbers, quorumCount)
-        );
-        uint192 currentBitmap = _currentOperatorBitmap(operatorId);
-        
         require(
             !quorumsToAdd.isEmpty(),
             "RegCoord._registerOperator: bitmap cannot be 0"
@@ -575,31 +545,30 @@ contract ZrRegistryCoordinator is
             quorumsToAdd.noBitsInCommon(currentBitmap),
             "RegCoord._registerOperator: operator already registered for some quorums"
         );
+        uint192 newBitmap = uint192(currentBitmap.plus(quorumsToAdd));
+
+        // Check that the operator can reregister if ejected
         require(
-            lastEjectionTimestamp[operator] + ejectionCooldown < block.timestamp,
+            lastEjectionTimestamp[operator] + ejectionCooldown <
+                block.timestamp,
             "RegCoord._registerOperator: operator cannot reregister yet"
         );
-    }
 
-    /**
-     * @dev Processes the main registration updates
-     */
-    function _processRegistration(
-        address operator,
-        bytes32 operatorId,
-        string memory socket,
-        string memory validatorAddr,
-        SignatureWithSaltAndExpiry memory operatorSignature,
-        uint192 newBitmap
-    ) internal {
-        _updateOperatorBitmap(operatorId, newBitmap);
+        /**
+         * Update operator's bitmap, socket, and status. Only update operatorInfo if needed:
+         * if we're `REGISTERED`, the operatorId and status are already correct.
+         */
+        _updateOperatorBitmap({operatorId: operatorId, newBitmap: newBitmap});
 
+        // If the operator wasn't registered for any quorums, update their status
+        // and register them with this AVS in EigenLayer core (DelegationManager)
         if (_operatorInfo[operator].status != OperatorStatus.REGISTERED) {
             _operatorInfo[operator] = OperatorInfo({
                 operatorId: operatorId,
                 status: OperatorStatus.REGISTERED
             });
 
+            // Register the operator with the EigenLayer core contracts via this AVS's ServiceManager
             serviceManager.registerOperatorToAVS(
                 operator,
                 validatorAddr,
@@ -610,16 +579,8 @@ contract ZrRegistryCoordinator is
 
             emit OperatorRegistered(operator, operatorId);
         }
-    }
 
-    /**
-     * @dev Updates all registry contracts
-     */
-    function _processRegistryUpdates(
-        address operator,
-        bytes32 operatorId,
-        bytes calldata quorumNumbers
-    ) internal returns (RegisterResults memory results) {
+        // Register the operator with the BLSApkRegistry, StakeRegistry, and IndexRegistry
         blsApkRegistry.registerOperator(operator, quorumNumbers);
         (results.operatorStakes, results.totalStakes) = stakeRegistry
             .registerOperator(operator, operatorId, quorumNumbers);
