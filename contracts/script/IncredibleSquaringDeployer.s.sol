@@ -8,7 +8,7 @@ import {IDelegationManager} from "../lib/eigenlayer-contracts/src/contracts/inte
 import {IAVSDirectory} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IAVSDirectory.sol";
 import {IStrategyManager, IStrategy} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IStrategyManager.sol";
 import {StrategyBase} from "../lib/eigenlayer-contracts/src/contracts/strategies/StrategyBase.sol";
-import {ISlasher} from "@eigenlayer/contracts/interfaces/ISlasher.sol";
+import {ISlasher} from "../lib/eigenlayer-contracts/src/contracts/interfaces/ISlasher.sol";
 import {StrategyBaseTVLLimits} from "../lib/eigenlayer-contracts/src/contracts/strategies/StrategyBaseTVLLimits.sol";
 import {IRewardsCoordinator} from "../lib/eigenlayer-contracts/src/contracts/interfaces/IRewardsCoordinator.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
@@ -24,9 +24,11 @@ import {SocketRegistry} from "../lib/eigenlayer-middleware/src/SocketRegistry.so
 import {OperatorStateRetriever} from "../lib/eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {ZrServiceManager} from "../src/ZrServiceManager.sol";
+import {ZrTaskManager} from "../src/ZrTaskManager.sol";
 import {ZrRegistryCoordinator} from "../src/ZrRegistryCoordinator.sol";
 
 import {IRegistryCoordinator} from "../lib/eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
+import {IZRTaskManager} from "../src/interfaces/IZRTaskManager.sol";
 
 import {Utils} from "./utils/Utils.sol";
 
@@ -43,7 +45,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
     
     address public constant AGGREGATOR_ADDR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
     address public constant TASK_GENERATOR_ADDR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
-    // address public constant REWARDS_INITIATOR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
 
     // Contract instances
     ProxyAdmin public incredibleSquaringProxyAdmin;
@@ -69,13 +70,12 @@ contract IncredibleSquaringDeployer is Script, Utils {
     ZrServiceManager public incredibleSquaringServiceManager;
     ZrServiceManager public incredibleSquaringServiceManagerImplementation;
 
+    ZrTaskManager public incredibleSquaringTaskManager;
+    ZrTaskManager public incredibleSquaringTaskManagerImplementation;
+
     function run() external {
-        // Get Eigenlayer contracts
         string memory eigenlayerDeployedContracts = readOutput("eigenlayer_deployment_output");
         
-        // IStrategyManager strategyManager = IStrategyManager(
-        //     stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.strategyManager")
-        // );
         IDelegationManager delegationManager = IDelegationManager(
             stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.delegation")
         );
@@ -107,7 +107,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
         IAVSDirectory avsDirectory,
         IStrategy strat,
         address incredibleSquaringCommunityMultisig,
-        address credibleSquaringPauser
+        address incredibleSquaringPauser
     ) internal {
         // Setup single strategy array
         IStrategy[1] memory deployedStrategyArray = [strat];
@@ -119,7 +119,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
         // Deploy pauser registry
         {
             address[] memory pausers = new address[](2);
-            pausers[0] = credibleSquaringPauser;
+            pausers[0] = incredibleSquaringPauser;
             pausers[1] = incredibleSquaringCommunityMultisig;
             incredibleSquaringPauserReg = new PauserRegistry(
                 pausers,
@@ -131,6 +131,14 @@ contract IncredibleSquaringDeployer is Script, Utils {
 
         // Deploy proxy contracts with empty implementation initially
         incredibleSquaringServiceManager = ZrServiceManager(
+            address(new TransparentUpgradeableProxy(
+                address(emptyContract),
+                address(incredibleSquaringProxyAdmin),
+                ""
+            ))
+        );
+
+        incredibleSquaringTaskManager = ZrTaskManager(
             address(new TransparentUpgradeableProxy(
                 address(emptyContract),
                 address(incredibleSquaringProxyAdmin),
@@ -229,7 +237,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             
             for (uint i = 0; i < numQuorums; i++) {
                 quorumsOperatorSetParams[i] = IRegistryCoordinator.OperatorSetParam({
-                    maxOperatorCount: 10000,
+                    maxOperatorCount: 75,
                     kickBIPsOfOperatorStake: 15000,
                     kickBIPsOfTotalStake: 100
                 });
@@ -265,7 +273,12 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        // Deploy and initialize ServiceManager
+        // Deploy TaskManager implementation
+        incredibleSquaringTaskManagerImplementation = new ZrTaskManager(
+            address(registryCoordinator)
+        );
+
+        // Deploy ServiceManager implementation
         incredibleSquaringServiceManagerImplementation = new ZrServiceManager(
             avsDirectory,
             IRewardsCoordinator(address(0x1A17df4170099577b79038Fd310f3ff62F79752E)),
@@ -273,6 +286,21 @@ contract IncredibleSquaringDeployer is Script, Utils {
             IStakeRegistry(address(stakeRegistry))
         );
 
+        // Initialize TaskManager first
+        incredibleSquaringProxyAdmin.upgradeAndCall(
+            TransparentUpgradeableProxy(payable(address(incredibleSquaringTaskManager))),
+            address(incredibleSquaringTaskManagerImplementation),
+            abi.encodeWithSelector(
+                ZrTaskManager.initialize.selector,
+                AGGREGATOR_ADDR,
+                TASK_GENERATOR_ADDR,
+                IRegistryCoordinator(address(registryCoordinator)),
+                TASK_RESPONSE_WINDOW_BLOCK,
+                incredibleSquaringCommunityMultisig
+            )
+        );
+
+        // Initialize ServiceManager with TaskManager address
         incredibleSquaringProxyAdmin.upgradeAndCall(
             TransparentUpgradeableProxy(payable(address(incredibleSquaringServiceManager))),
             address(incredibleSquaringServiceManagerImplementation),
@@ -280,10 +308,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 ZrServiceManager.initialize.selector,
                 incredibleSquaringPauserReg,
                 incredibleSquaringCommunityMultisig,
-                AGGREGATOR_ADDR,
-                TASK_GENERATOR_ADDR,
-                // REWARDS_INITIATOR,
-                TASK_RESPONSE_WINDOW_BLOCK
+                IZRTaskManager(address(incredibleSquaringTaskManager)) // Pass the TaskManager address
             )
         );
 
@@ -293,6 +318,8 @@ contract IncredibleSquaringDeployer is Script, Utils {
 
         vm.serializeAddress(deployed_addresses, "incredibleSquaringServiceManager", address(incredibleSquaringServiceManager));
         vm.serializeAddress(deployed_addresses, "incredibleSquaringServiceManagerImplementation", address(incredibleSquaringServiceManagerImplementation));
+        vm.serializeAddress(deployed_addresses, "incredibleSquaringTaskManager", address(incredibleSquaringTaskManager));
+        vm.serializeAddress(deployed_addresses, "incredibleSquaringTaskManagerImplementation", address(incredibleSquaringTaskManagerImplementation));
         vm.serializeAddress(deployed_addresses, "registryCoordinator", address(registryCoordinator));
         vm.serializeAddress(deployed_addresses, "registryCoordinatorImplementation", address(registryCoordinatorImplementation));
         vm.serializeAddress(deployed_addresses, "stakeRegistry", address(stakeRegistry));
