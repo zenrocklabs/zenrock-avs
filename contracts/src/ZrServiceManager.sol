@@ -382,4 +382,10 @@ contract ZrServiceManager is
         ZrServiceManagerStorage storage $ = _getZrServiceManagerStorage();
         return $._validators[validatorHash];
     }
+
+    // TODO: remove?
+    function debugGetAllValidatorHashes() external view returns (bytes32[] memory) {
+        ZrServiceManagerStorage storage $ = _getZrServiceManagerStorage();
+        return $._allValidators;
+    }
 }
