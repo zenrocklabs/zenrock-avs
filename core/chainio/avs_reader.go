@@ -10,7 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 )
 
@@ -67,7 +67,7 @@ func (r *AvsReader) CheckSignatures(
 }
 
 func (r *AvsReader) GetLatestTaskNumber(ctx context.Context) (uint32, error) {
-	latestTask, err := r.AvsServiceBindings.TaskManager.LatestTaskId(&bind.CallOpts{})
+	latestTask, err := r.AvsServiceBindings.TaskManager.GetTaskNumber(&bind.CallOpts{})
 	if err != nil {
 		return 0, err
 	}

@@ -18,7 +18,7 @@ import (
 	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 )
 
 const (
@@ -72,9 +72,9 @@ type Aggregator struct {
 	avsReader        chainio.AvsReaderer
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
-	tasks                 map[types.TaskId]cstaskmanager.ITaskManagerZRTask
+	tasks                 map[types.TaskId]cstaskmanager.ZrServiceManagerLibTask
 	tasksMu               sync.RWMutex
-	taskResponses         map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse
+	taskResponses         map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZrServiceManagerLibTaskResponse
 	taskResponsesMu       sync.RWMutex
 	currentTaskId         uint32
 }
@@ -118,8 +118,8 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		avsWriter:             avsWriter,
 		avsReader:             avsReader,
 		blsAggregationService: blsAggregationService,
-		tasks:                 make(map[types.TaskId]cstaskmanager.ITaskManagerZRTask),
-		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ITaskManagerZRTaskResponse),
+		tasks:                 make(map[types.TaskId]cstaskmanager.ZrServiceManagerLibTask),
+		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZrServiceManagerLibTaskResponse),
 	}, nil
 }
 

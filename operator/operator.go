@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/zenrocklabs/zenrock-avs/aggregator"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	"github.com/zenrocklabs/zenrock-avs/core"
 	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 	"github.com/zenrocklabs/zenrock-avs/metrics"
@@ -60,7 +60,7 @@ type Operator struct {
 	operatorId       sdktypes.OperatorId
 	operatorAddr     common.Address
 	// receive new tasks in this chan (typically from listening to onchain event)
-	newTaskCreatedChan chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated
+	newTaskCreatedChan chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated
 	// ip address of aggregator
 	aggregatorServerIpPortAddr string
 	// rpc client to send signed task responses to aggregator
@@ -235,7 +235,7 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
 		aggregatorRpcClient:                aggregatorRpcClient,
-		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated),
+		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated),
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
 		zrChainClient:                      zrChainClient,
@@ -312,7 +312,7 @@ func (o *Operator) Start(ctx context.Context) error {
 
 // ProcessNewTaskCreatedLog takes a NewTaskCreatedLog struct as input and returns a TaskResponse struct.
 // The TaskResponse struct is the struct that is signed and sent to the contract as a task response.
-func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractTaskManagerZRNewTaskCreated) *cstaskmanager.ITaskManagerZRTaskResponse {
+func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZrTaskManagerNewTaskCreated) *cstaskmanager.ZrServiceManagerLibTaskResponse {
 	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
 	o.logger.Info("Received new task",
 		"taskId", newTaskCreatedLog.Task.TaskId,
@@ -325,9 +325,9 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	pageReq := &query.PageRequest{}
 
 	for {
-		resp, err := o.zrChainClient.ValidationQueryClient.ActiveSetValidators(context.Background(), pageReq)
+		resp, err := o.zrChainClient.ValidationQueryClient.UnbondedValidators(context.Background(), pageReq)
 		if err != nil {
-			o.logger.Error("Error getting active set validators", "err", err)
+			o.logger.Error("Error getting unbonded validators", "err", err)
 		}
 
 		for _, validator := range resp.Validators {
@@ -342,15 +342,15 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	}
 
 	// Create the TaskResponse with the new structure
-	taskResponse := &cstaskmanager.ITaskManagerZRTaskResponse{
-		ReferenceTaskId:  newTaskCreatedLog.Task.TaskId,
-		ActiveSetZRChain: validatorAddresses,
+	taskResponse := &cstaskmanager.ZrServiceManagerLibTaskResponse{
+		ReferenceTaskId:    newTaskCreatedLog.Task.TaskId,
+		InactiveSetZRChain: validatorAddresses,
 	}
 
 	return taskResponse
 }
 
-func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.ITaskManagerZRTaskResponse) (*aggregator.SignedTaskResponse, error) {
+func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.ZrServiceManagerLibTaskResponse) (*aggregator.SignedTaskResponse, error) {
 	taskResponseHash, err := core.GetTaskResponseDigest(taskResponse)
 	if err != nil {
 		o.logger.Error("Error getting task response header hash. skipping task (this is not expected and should be investigated)", "err", err)

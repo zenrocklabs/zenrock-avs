@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.21;
 
-import "@eigenlayer-middleware/src/libraries/BN254.sol";
+import "../../lib/eigenlayer-middleware/src/libraries/BN254.sol";
 
-interface ITaskManagerZR {
+interface IZRTaskManager {
     // EVENTS
     event NewTaskCreated(uint32 indexed taskId, Task task);
 
@@ -23,6 +23,8 @@ interface ITaskManagerZR {
         uint32 indexed taskId,
         address indexed challenger
     );
+    
+    event ValidatorAddressesStored(uint32 indexed taskId, string[] addresses);
 
     // STRUCTS
     struct Task {
@@ -43,7 +45,7 @@ interface ITaskManagerZR {
     struct TaskResponse {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskId;
-        string[] activeSetZRChain;
+        string[] inactiveSetZRChain;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.

@@ -16,7 +16,7 @@ import (
 
 	"github.com/zenrocklabs/zenrock-avs/aggregator"
 	aggtypes "github.com/zenrocklabs/zenrock-avs/aggregator/types"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	chainiomocks "github.com/zenrocklabs/zenrock-avs/core/chainio/mocks"
 	operatormocks "github.com/zenrocklabs/zenrock-avs/operator/mocks"
 )
@@ -28,9 +28,9 @@ func TestOperator(t *testing.T) {
 
 	t.Run("ProcessNewTaskCreatedLog", func(t *testing.T) {
 		// var numberToBeSquared = big.NewInt(3)
-		newTaskCreatedLog := &cstaskmanager.ContractTaskManagerZRNewTaskCreated{
+		newTaskCreatedLog := &cstaskmanager.ContractZrTaskManagerNewTaskCreated{
 			TaskId: taskIndex,
-			Task: cstaskmanager.ITaskManagerZRTask{
+			Task: cstaskmanager.ZrServiceManagerLibTask{
 				TaskCreatedBlock:          1000,
 				QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
 				QuorumThresholdPercentage: uint32(aggtypes.QUORUM_THRESHOLD_NUMERATOR),
@@ -39,7 +39,7 @@ func TestOperator(t *testing.T) {
 		}
 		got := operator.ProcessNewTaskCreatedLog(newTaskCreatedLog)
 		// numberSquared := big.NewInt(0).Mul(numberToBeSquared, numberToBeSquared)
-		want := &cstaskmanager.ITaskManagerZRTaskResponse{
+		want := &cstaskmanager.ZrServiceManagerLibTaskResponse{
 			ReferenceTaskId: taskIndex,
 			// NumberSquared:      numberSquared,
 		}
@@ -50,9 +50,9 @@ func TestOperator(t *testing.T) {
 		// var numberToBeSquared = big.NewInt(3)
 
 		// new task event
-		newTaskCreatedEvent := &cstaskmanager.ContractTaskManagerZRNewTaskCreated{
+		newTaskCreatedEvent := &cstaskmanager.ContractZrTaskManagerNewTaskCreated{
 			TaskId: taskIndex,
-			Task: cstaskmanager.ITaskManagerZRTask{
+			Task: cstaskmanager.ZrServiceManagerLibTask{
 				// NumberToBeSquared:         numberToBeSquared,
 				TaskCreatedBlock:          1000,
 				QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
@@ -67,7 +67,7 @@ func TestOperator(t *testing.T) {
 		assert.True(t, ok)
 
 		signedTaskResponse := &aggregator.SignedTaskResponse{
-			TaskResponse: cstaskmanager.ITaskManagerZRTaskResponse{
+			TaskResponse: cstaskmanager.ZrServiceManagerLibTaskResponse{
 				ReferenceTaskId: taskIndex,
 				// NumberSquared:      big.NewInt(0).Mul(numberToBeSquared, numberToBeSquared),
 			},

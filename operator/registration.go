@@ -11,7 +11,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -19,8 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	eigenSdkTypes "github.com/Layr-Labs/eigensdk-go/types"
-
-	avs "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
 )
 
 func (o *Operator) registerOperatorOnStartup(
@@ -48,38 +45,38 @@ func (o *Operator) registerOperatorOnStartup(
 		o.logger.Infof("Registered operator with avs")
 	}
 
-	if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
-		o.logger.Debug("Error delegating via service manager", "err", err)
-	} else {
-		o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
-	}
+	// if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
+	// 	o.logger.Debug("Error delegating via service manager", "err", err)
+	// } else {
+	// 	o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
+	// }
 }
 
-func (o *Operator) DelegateServiceManager(validatorAddr string, amount *big.Int) error {
-	serviceManager, err := avs.NewContractZRServiceManager(common.HexToAddress(o.config.ServiceManagerAddress), o.ethClient)
-	if err != nil {
-		o.logger.Fatal("Error creating service manager contract interface", "err", err)
-		return err
-	}
+// func (o *Operator) DelegateServiceManager(validatorAddr string, amount *big.Int) error {
+// 	serviceManager, err := avs.NewContractZrServiceManager(common.HexToAddress(o.config.ServiceManagerAddress), o.ethClient)
+// 	if err != nil {
+// 		o.logger.Fatal("Error creating service manager contract interface", "err", err)
+// 		return err
+// 	}
 
-	txOpts, err := o.avsWriter.TxMgr.GetNoSendTxOpts()
-	if err != nil {
-		o.logger.Errorf("Error getting txOpts")
-		return err
-	}
+// 	txOpts, err := o.avsWriter.TxMgr.GetNoSendTxOpts()
+// 	if err != nil {
+// 		o.logger.Errorf("Error getting txOpts")
+// 		return err
+// 	}
 
-	tx, err := serviceManager.Delegate(txOpts, validatorAddr, amount)
-	if err != nil {
-		o.logger.Debug("Error creating Delegate tx")
-		return err
-	}
+// 	tx, err := serviceManager.Delegate(txOpts, validatorAddr, amount)
+// 	if err != nil {
+// 		o.logger.Debug("Error creating Delegate tx")
+// 		return err
+// 	}
 
-	if _, err = o.avsWriter.TxMgr.Send(context.Background(), tx); err != nil {
-		return errors.New("failed to send tx with err: " + err.Error())
-	}
+// 	if _, err = o.avsWriter.TxMgr.Send(context.Background(), tx); err != nil {
+// 		return errors.New("failed to send tx with err: " + err.Error())
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 func (o *Operator) RegisterOperatorWithEigenlayer() error {
 	op := eigenSdkTypes.Operator{

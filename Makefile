@@ -18,7 +18,7 @@ DEPLOYMENT_FILES_DIR=contracts/script/output/${CHAINID}
 ___CONTRACTS___: ## 
 
 build-contracts: ## builds all contracts
-	cd contracts && forge build
+	cd contracts && forge build --sizes
 
 deploy-eigenlayer-contracts-to-anvil-and-save-state: ## Deploy eigenlayer
 	./tests/anvil/deploy-eigenlayer-save-anvil-state.sh

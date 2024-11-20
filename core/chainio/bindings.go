@@ -8,13 +8,13 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
-	csservicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZRServiceManager"
+	csservicemanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrServiceManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 )
 
 type AvsManagersBindings struct {
-	TaskManager    *cstaskmanager.ContractTaskManagerZR
-	ServiceManager *csservicemanager.ContractZRServiceManager
+	TaskManager    *cstaskmanager.ContractZrTaskManager
+	ServiceManager *csservicemanager.ContractZrServiceManager
 	ethClient      eth.Client
 	logger         logging.Logger
 }
@@ -28,18 +28,18 @@ func NewAvsManagersBindings(registryCoordinatorAddr, operatorStateRetrieverAddr 
 	if err != nil {
 		return nil, err
 	}
-	contractServiceManager, err := csservicemanager.NewContractZRServiceManager(serviceManagerAddr, ethclient)
+	contractServiceManager, err := csservicemanager.NewContractZrServiceManager(serviceManagerAddr, ethclient)
 	if err != nil {
 		logger.Error("Failed to fetch IServiceManager contract", "err", err)
 		return nil, err
 	}
 
-	taskManagerAddr, err := contractServiceManager.TaskManagerZR(&bind.CallOpts{})
+	taskManagerAddr, err := contractServiceManager.TaskManager(&bind.CallOpts{})
 	if err != nil {
 		logger.Error("Failed to fetch TaskManager address", "err", err)
 		return nil, err
 	}
-	contractTaskManager, err := cstaskmanager.NewContractTaskManagerZR(taskManagerAddr, ethclient)
+	contractTaskManager, err := cstaskmanager.NewContractZrTaskManager(taskManagerAddr, ethclient)
 	if err != nil {
 		logger.Error("Failed to fetch IIncredibleSquaringTaskManager contract", "err", err)
 		return nil, err
