@@ -19,7 +19,7 @@ import (
 	types "github.com/Layr-Labs/eigensdk-go/types"
 	common "github.com/ethereum/go-ethereum/common"
 	types0 "github.com/ethereum/go-ethereum/core/types"
-	contractTaskManagerZR "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	contractZrTaskManager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -62,7 +62,7 @@ func (mr *MockAvsWritererMockRecorder) DeregisterOperator(arg0, arg1, arg2 any) 
 }
 
 // RaiseChallenge mocks base method.
-func (m *MockAvsWriterer) RaiseChallenge(arg0 context.Context, arg1 contractTaskManagerZR.ITaskManagerZRTask, arg2 contractTaskManagerZR.ITaskManagerZRTaskResponse, arg3 contractTaskManagerZR.ITaskManagerZRTaskResponseMetadata, arg4 []contractTaskManagerZR.BN254G1Point) (*types0.Receipt, error) {
+func (m *MockAvsWriterer) RaiseChallenge(arg0 context.Context, arg1 contractZrTaskManager.ZrServiceManagerLibTask, arg2 contractZrTaskManager.ZrServiceManagerLibTaskResponse, arg3 contractZrTaskManager.ZrServiceManagerLibTaskResponseMetadata, arg4 []contractZrTaskManager.BN254G1Point) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RaiseChallenge", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types0.Receipt)
@@ -92,7 +92,7 @@ func (mr *MockAvsWritererMockRecorder) RegisterOperatorInQuorumWithAVSRegistryCo
 }
 
 // SendAggregatedResponse mocks base method.
-func (m *MockAvsWriterer) SendAggregatedResponse(arg0 context.Context, arg1 contractTaskManagerZR.ITaskManagerZRTask, arg2 contractTaskManagerZR.ITaskManagerZRTaskResponse, arg3 contractTaskManagerZR.IBLSSignatureCheckerNonSignerStakesAndSignature) (*types0.Receipt, error) {
+func (m *MockAvsWriterer) SendAggregatedResponse(arg0 context.Context, arg1 contractZrTaskManager.ZrServiceManagerLibTask, arg2 contractZrTaskManager.ZrServiceManagerLibTaskResponse, arg3 contractZrTaskManager.IBLSSignatureCheckerNonSignerStakesAndSignature) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendAggregatedResponse", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*types0.Receipt)
@@ -107,10 +107,10 @@ func (mr *MockAvsWritererMockRecorder) SendAggregatedResponse(arg0, arg1, arg2, 
 }
 
 // SendNewTask mocks base method.
-func (m *MockAvsWriterer) SendNewTask(arg0 context.Context, arg1 uint32, arg2 types.QuorumThresholdPercentage, arg3 types.QuorumNums) (contractTaskManagerZR.ITaskManagerZRTask, uint32, error) {
+func (m *MockAvsWriterer) SendNewTask(arg0 context.Context, arg1 uint32, arg2 types.QuorumThresholdPercentage, arg3 types.QuorumNums) (contractZrTaskManager.ZrServiceManagerLibTask, uint32, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SendNewTask", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(contractTaskManagerZR.ITaskManagerZRTask)
+	ret0, _ := ret[0].(contractZrTaskManager.ZrServiceManagerLibTask)
 	ret1, _ := ret[1].(uint32)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2

@@ -5,13 +5,13 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	"golang.org/x/crypto/sha3"
 )
 
 // this hardcodes abi.encode() for cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 // unclear why abigen doesn't provide this out of the box...
-func AbiEncodeTaskResponse(h *cstaskmanager.ITaskManagerZRTaskResponse) ([]byte, error) {
+func AbiEncodeTaskResponse(h *cstaskmanager.ZrServiceManagerLibTaskResponse) ([]byte, error) {
 
 	// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
@@ -20,7 +20,7 @@ func AbiEncodeTaskResponse(h *cstaskmanager.ITaskManagerZRTaskResponse) ([]byte,
 			Type: "uint32",
 		},
 		{
-			Name: "activeSetZRChain",
+			Name: "inactiveSetZRChain",
 			Type: "string[]",
 		},
 	})
@@ -42,7 +42,7 @@ func AbiEncodeTaskResponse(h *cstaskmanager.ITaskManagerZRTaskResponse) ([]byte,
 }
 
 // GetTaskResponseDigest returns the hash of the TaskResponse, which is what operators sign over
-func GetTaskResponseDigest(h *cstaskmanager.ITaskManagerZRTaskResponse) ([32]byte, error) {
+func GetTaskResponseDigest(h *cstaskmanager.ZrServiceManagerLibTaskResponse) ([32]byte, error) {
 
 	encodeTaskResponseByte, err := AbiEncodeTaskResponse(h)
 	if err != nil {

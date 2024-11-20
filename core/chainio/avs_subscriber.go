@@ -9,14 +9,14 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 )
 
 type AvsSubscriberer interface {
-	SubscribeToNewTasks(newTaskCreatedChan chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated) event.Subscription
-	SubscribeToTaskResponses(taskResponseLogs chan *cstaskmanager.ContractTaskManagerZRTaskResponded) event.Subscription
-	ParseTaskResponded(rawLog types.Log) (*cstaskmanager.ContractTaskManagerZRTaskResponded, error)
+	SubscribeToNewTasks(newTaskCreatedChan chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated) event.Subscription
+	SubscribeToTaskResponses(taskResponseLogs chan *cstaskmanager.ContractZrTaskManagerTaskResponded) event.Subscription
+	ParseTaskResponded(rawLog types.Log) (*cstaskmanager.ContractZrTaskManagerTaskResponded, error)
 }
 
 // Subscribers use a ws connection instead of http connection like Readers
@@ -53,7 +53,7 @@ func NewAvsSubscriber(avsContractBindings *AvsManagersBindings, logger sdkloggin
 	}
 }
 
-func (s *AvsSubscriber) SubscribeToNewTasks(newTaskCreatedChan chan *cstaskmanager.ContractTaskManagerZRNewTaskCreated) event.Subscription {
+func (s *AvsSubscriber) SubscribeToNewTasks(newTaskCreatedChan chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated) event.Subscription {
 	sub, err := s.AvsContractBindings.TaskManager.WatchNewTaskCreated(
 		&bind.WatchOpts{}, newTaskCreatedChan, nil,
 	)
@@ -64,7 +64,7 @@ func (s *AvsSubscriber) SubscribeToNewTasks(newTaskCreatedChan chan *cstaskmanag
 	return sub
 }
 
-func (s *AvsSubscriber) SubscribeToTaskResponses(taskResponseChan chan *cstaskmanager.ContractTaskManagerZRTaskResponded) event.Subscription {
+func (s *AvsSubscriber) SubscribeToTaskResponses(taskResponseChan chan *cstaskmanager.ContractZrTaskManagerTaskResponded) event.Subscription {
 	sub, err := s.AvsContractBindings.TaskManager.WatchTaskResponded(
 		&bind.WatchOpts{}, taskResponseChan,
 	)
@@ -75,6 +75,6 @@ func (s *AvsSubscriber) SubscribeToTaskResponses(taskResponseChan chan *cstaskma
 	return sub
 }
 
-func (s *AvsSubscriber) ParseTaskResponded(rawLog types.Log) (*cstaskmanager.ContractTaskManagerZRTaskResponded, error) {
-	return s.AvsContractBindings.TaskManager.ContractTaskManagerZRFilterer.ParseTaskResponded(rawLog)
+func (s *AvsSubscriber) ParseTaskResponded(rawLog types.Log) (*cstaskmanager.ContractZrTaskManagerTaskResponded, error) {
+	return s.AvsContractBindings.TaskManager.ContractZrTaskManagerFilterer.ParseTaskResponded(rawLog)
 }

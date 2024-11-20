@@ -214,6 +214,11 @@ contract ZrServiceManager is
         return $.taskManager.getTaskResponseWindowBlock();
     }
 
+    function taskManager() external view returns (IZRTaskManager) {
+        ZrServiceManagerStorage storage $ = _getZrServiceManagerStorage();
+        return $.taskManager;
+    }
+
     // ------------------------------------------------- INTERNAL ----------------------------------------------------------------------
     function _ejectValidators(
         string[] memory inactiveValidatorSet

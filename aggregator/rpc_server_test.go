@@ -11,7 +11,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/zenrocklabs/zenrock-avs/aggregator/types"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 	"github.com/zenrocklabs/zenrock-avs/core"
 )
 
@@ -62,7 +62,7 @@ func TestProcessSignedTaskResponse(t *testing.T) {
 // mocks an operator signing on a task response
 func createMockSignedTaskResponse(mockTask MockTask, keypair bls.KeyPair) (*SignedTaskResponse, error) {
 	// numberToSquareBigInt := big.NewInt(int64(mockTask.NumberToSquare))
-	taskResponse := &cstaskmanager.ITaskManagerZRTaskResponse{
+	taskResponse := &cstaskmanager.ZrServiceManagerLibTaskResponse{
 		ReferenceTaskId: mockTask.TaskNum,
 		// NumberSquared:      numberToSquareBigInt.Mul(numberToSquareBigInt, numberToSquareBigInt),
 	}

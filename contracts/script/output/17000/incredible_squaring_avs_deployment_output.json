@@ -1,15 +1,15 @@
 {
   "addresses": {
-    "incredibleSquaringServiceManager": "0xAf8458c972c59D9Ba732C62Ff5ebae20D4e22BB1",
-    "incredibleSquaringServiceManagerImplementation": "0xA2C98CAa2775448277eFa99e711eA4EA566c5ac0",
-    "incredibleSquaringTaskManager": "0xDB37a48De7270E813d0693DE60DF5906E35885d2",
+    "incredibleSquaringServiceManager": "0xCf07BD18E1F709b30446D9B03AD8f8622f596d17",
+    "incredibleSquaringServiceManagerImplementation": "0xacb6EB178a40120846efF3f844CEd27b3F0E271d",
+    "incredibleSquaringTaskManager": "0xE1CF93d4B3a37F8200F40447ae33DB4D3FcEffdF",
     "incredibleSquaringTaskManagerImplementation": "0x0000000000000000000000000000000000000000",
-    "operatorStateRetriever": "0xbA1a699E2B0237564f06F7DC2f5D2B816445624D",
-    "registryCoordinator": "0x2760c83F8d70374Aeb8Ae77DFd01540fC63838Cf",
-    "registryCoordinatorImplementation": "0xA7b356b0bB4945C9D0529CF2031f519b835e73F1",
-    "socketRegistry": "0xd3C13F82E0CB9B806E19c3061264c89E3A44108c",
-    "socketRegistryImplementation": "0xF5BF60767c317c84806AE405C140279Ca156984d",
-    "stakeRegistry": "0x12Adc4e84e857D838139C0B1838481E90C8233cD",
-    "stakeRegistryImplementation": "0xf9F16CBb8CbcCDc73DDD387125b99101be683E72"
+    "operatorStateRetriever": "0x06f4Ff52670ABD9b2c57b78FED259f84E4DbF156",
+    "registryCoordinator": "0xc3D4829B47d409B0f8cb9d2b9F87172016015D66",
+    "registryCoordinatorImplementation": "0x7E7EdE9dE7849dBD3c4b401f89D604310fAEe08f",
+    "socketRegistry": "0xCe224d793C76786f34B1B74981225996DE89CAb4",
+    "socketRegistryImplementation": "0x926e8466b23EE56DABf7E7738E42Ec809626ac02",
+    "stakeRegistry": "0xc00B0ec1F5535BC64Fc236F794493406ac628Fa3",
+    "stakeRegistryImplementation": "0xEF2FfaaA71860E5525F3C93b9BdA994251F33243"
   }
 }

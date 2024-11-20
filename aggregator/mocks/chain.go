@@ -6,13 +6,13 @@ import (
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/zenrocklabs/zenrock-avs/aggregator/types"
-	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/TaskManagerZR"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
 )
 
 // ====== TaskManager Mocks ======
 
-func MockSendNewTaskNumberToSquareCall(blockNum, taskNum, numberToSquare uint32) (cstaskmanager.ITaskManagerZRTask, uint32, error) {
-	task := cstaskmanager.ITaskManagerZRTask{
+func MockSendNewTaskNumberToSquareCall(blockNum, taskNum, numberToSquare uint32) (cstaskmanager.ZrServiceManagerLibTask, uint32, error) {
+	task := cstaskmanager.ZrServiceManagerLibTask{
 		// NumberToBeSquared:         big.NewInt(int64(numberToSquare)),
 		TaskCreatedBlock:          blockNum,
 		QuorumNumbers:             types.QUORUM_NUMBERS.UnderlyingType(),

@@ -17,7 +17,7 @@ func main() {
 	}
 
 	// contract address is our AVS' StakeRegistry proxy (not implementation)
-	stakeReg, err := NewContractStakeRegistry(common.HexToAddress("0x12Adc4e84e857D838139C0B1838481E90C8233cD"), ethRpcClient)
+	stakeReg, err := NewContractStakeRegistry(common.HexToAddress("0xc00B0ec1F5535BC64Fc236F794493406ac628Fa3"), ethRpcClient)
 	if err != nil {
 		panic(err)
 	}
