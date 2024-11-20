@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.6...v1.4.0) (2024-11-20)
+
+
+### Features
+
+* update contracts for mainnet ([aa3ee1c](https://github.com/zenrocklabs/zenrock-avs/commit/aa3ee1c02d1ab6a1af7c63be37b84e467ca9a451))
+
 ## [1.3.6](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.5...v1.3.6) (2024-11-18)
 
 
