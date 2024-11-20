@@ -1,3 +1,10 @@
+## [1.4.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.3...v1.4.4) (2024-11-20)
+
+
+### Bug Fixes
+
+* remove stake check on registration ([3e24c62](https://github.com/zenrocklabs/zenrock-avs/commit/3e24c62315f3f7c70e62528368a0d1eea57ce244))
+
 ## [1.4.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.2...v1.4.3) (2024-11-20)
 
 
