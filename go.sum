@@ -1234,8 +1234,8 @@ github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
 github.com/zenrocklabs/zenbtc v1.0.3 h1:CMSjB+5RBDkrdtcBxJDXd4AINI7qKtEWHYM7DYv1a28=
 github.com/zenrocklabs/zenbtc v1.0.3/go.mod h1:8/OrG40LJjQ0MyoXg1p1C3aWeclPTAPuquKyrzNil38=
-github.com/zenrocklabs/zrchain/v5 v5.2.10 h1:ThyGOTRBNg166+HTtPVRxrds5JADP5Kg77oAZDcg5lM=
-github.com/zenrocklabs/zrchain/v5 v5.2.10/go.mod h1:D9Lv8Zw/rGJErJVX6dl2SfmQks5hEOvwYx4r7cYrmCM=
+github.com/zenrocklabs/zrchain/v5 v5.3.5 h1:r/C7XUtzpshSKS2idgRtEiC9yGo+HydUfmFFOIvYavA=
+github.com/zenrocklabs/zrchain/v5 v5.3.5/go.mod h1:1jET2EmitdHuGSXguUwCnOf6HQAxA23aVjnKQKKtcA0=
 github.com/zondax/hid v0.9.2 h1:WCJFnEDMiqGF64nlZz28E9qLVZ0KSJ7xpc5DLEyma2U=
 github.com/zondax/hid v0.9.2/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
 github.com/zondax/ledger-go v1.0.0 h1:BvNoksIyRqyQTW78rIZP9A44WwAminKiomQa7jXp9EI=
