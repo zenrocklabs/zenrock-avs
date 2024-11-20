@@ -1,3 +1,10 @@
+## [1.4.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.2...v1.4.3) (2024-11-20)
+
+
+### Bug Fixes
+
+* use forked `eigensdk-go` ([d8b3622](https://github.com/zenrocklabs/zenrock-avs/commit/d8b36220c40a0e5bea325139b1b40c67784d3b0a))
+
 ## [1.4.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.1...v1.4.2) (2024-11-20)
 
 
