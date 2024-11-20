@@ -260,8 +260,6 @@ github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/cloudmock v0
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0 h1:GYUJLfvd++4DMuMhCFLgLXvFwofIxh/qOwoGuS/LTew=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.49.0/go.mod h1:wRbFgBQUVm1YXrvWKofAEmq9HNJTDphbAaJSSX01KUI=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
-github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775 h1:xQQ4xnlzO1n0nU2HPizd00H2N3zacJjbSPwLhOHxZEo=
-github.com/Layr-Labs/eigensdk-go v0.1.7-0.20240425202952-954cd7661775/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
 github.com/Microsoft/go-winio v0.6.2 h1:F2VQgta7ecxGYO8k3ZZz3RS8fVIXVxONVUPlNERoyfY=
 github.com/Microsoft/go-winio v0.6.2/go.mod h1:yd8OoFMLzJbo9gZq8j5qaps8bJ9aShtEA8Ipt1oGCvU=
 github.com/Microsoft/hcsshim v0.11.4 h1:68vKo2VN8DE9AdN4tnkWnmdhqdbpUFM8OF3Airm7fz8=
@@ -1232,6 +1230,8 @@ github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5t
 github.com/yusufpapurcu/wmi v1.2.3/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
 github.com/yusufpapurcu/wmi v1.2.4 h1:zFUKzehAFReQwLys1b/iSMl+JQGSCSjtVqQn9bBrPo0=
 github.com/yusufpapurcu/wmi v1.2.4/go.mod h1:SBZ9tNy3G9/m5Oi98Zks0QjeHVDvuK0qfxQmPyzfmi0=
+github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock h1:0lXiQgTZ0dCipYFT1WuZAEftEffDkjIsykdac3GTsn0=
+github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock/go.mod h1:ECU8/Ocsf+dGcN2rs8I1PScq4dOkQqY+vgwnq30Ov4M=
 github.com/zenrocklabs/zenbtc v1.0.3 h1:CMSjB+5RBDkrdtcBxJDXd4AINI7qKtEWHYM7DYv1a28=
 github.com/zenrocklabs/zenbtc v1.0.3/go.mod h1:8/OrG40LJjQ0MyoXg1p1C3aWeclPTAPuquKyrzNil38=
 github.com/zenrocklabs/zrchain/v5 v5.3.5 h1:r/C7XUtzpshSKS2idgRtEiC9yGo+HydUfmFFOIvYavA=

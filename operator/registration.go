@@ -124,7 +124,7 @@ func (o *Operator) RegisterOperatorWithAvs(
 	_, err = o.avsWriter.RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 		context.Background(),
 		operatorEcdsaKeyPair, operatorToAvsRegistrationSigSalt, operatorToAvsRegistrationSigExpiry,
-		o.blsKeypair, quorumNumbers, socket,
+		o.blsKeypair, o.config.OperatorValidatorAddress, quorumNumbers, socket,
 	)
 	if err != nil {
 		o.logger.Debug("Unable to register operator with avs registry coordinator")

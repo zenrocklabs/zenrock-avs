@@ -23,7 +23,7 @@ rm -rf bindings/*
 forge clean
 forge build --sizes
 
-avs_service_contracts="ZrServiceManager ZrTaskManager"
+avs_service_contracts="ZrServiceManager ZrTaskManager ZrRegistryCoordinator"
 for contract in $avs_service_contracts; do
     create_binding . $contract ./bindings
 done

@@ -178,7 +178,7 @@ func plugin(ctx *cli.Context) {
 		r, err := clients.AvsRegistryChainWriter.RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 			goCtx,
 			operatorEcdsaPrivateKey, operatorToAvsRegistrationSigSalt, operatorToAvsRegistrationSigExpiry,
-			blsKeypair, quorumNumbers, socket,
+			blsKeypair, avsConfig.OperatorValidatorAddress, quorumNumbers, socket,
 		)
 		if err != nil {
 			logger.Errorf("Error assembling CreateNewTask tx")
