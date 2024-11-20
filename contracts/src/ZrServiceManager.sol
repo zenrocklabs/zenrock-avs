@@ -292,9 +292,6 @@ contract ZrServiceManager is
         require(validatorHash != bytes32(0), "invalid validator address");
         require(_validatorExists(validatorHash), "unknown validator hash");
 
-        uint96 stake = getEigenStake(oprAddr, QUORUM_NUMBER);
-        require(stake > 0, "invalid stake");
-
         ZrServiceManagerStorage storage $ = _getZrServiceManagerStorage();
         $.operatorToValidator[oprAddr] = validatorHash;
         $.operatorToValidatorIndex[oprAddr] = $
@@ -302,7 +299,7 @@ contract ZrServiceManager is
             .operators
             .length;
         $._validators[validatorHash].operators.push(oprAddr);
-        emit OperatorAssigned(oprAddr, validatorHash, stake);
+        emit OperatorAssigned(oprAddr, validatorHash);
     }
 
     function _deRegisterOperator(address oprAddr) internal virtual {

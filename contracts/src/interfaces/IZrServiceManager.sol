@@ -14,8 +14,7 @@ interface IZrServiceManager {
     event ValidatorDeregistered(bytes32 indexed validatorHash);
     event OperatorAssigned(
         address indexed operatorAddr,
-        bytes32 indexed validatorHash,
-        uint96 stake
+        bytes32 indexed validatorHash
     );
     event OperatorDeregistered(
         address indexed operatorAddr,
