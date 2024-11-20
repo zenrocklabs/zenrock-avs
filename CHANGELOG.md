@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.0...v1.4.1) (2024-11-20)
+
+
+### Bug Fixes
+
+* temporarily comment out inactive set query code ([5234ad6](https://github.com/zenrocklabs/zenrock-avs/commit/5234ad6bb671b32c96917a52c1b9b2156403ac91))
+
 # [1.4.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.3.6...v1.4.0) (2024-11-20)
 
 
