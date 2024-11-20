@@ -28,6 +28,7 @@ import {ZrTaskManager} from "../src/ZrTaskManager.sol";
 import {ZrRegistryCoordinator} from "../src/ZrRegistryCoordinator.sol";
 
 import {IRegistryCoordinator} from "../lib/eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
+import {IZrServiceManager} from "../src/interfaces/IZrServiceManager.sol";
 import {IZRTaskManager} from "../src/interfaces/IZRTaskManager.sol";
 
 import {Utils} from "./utils/Utils.sol";
@@ -273,9 +274,14 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        // Deploy TaskManager implementation
-        incredibleSquaringTaskManagerImplementation = new ZrTaskManager(
-            address(registryCoordinator)
+        // Deploy ZrTaskManager directly without a proxy
+        incredibleSquaringTaskManager = new ZrTaskManager(
+            AGGREGATOR_ADDR,
+            TASK_GENERATOR_ADDR,
+            IRegistryCoordinator(address(registryCoordinator)),
+            TASK_RESPONSE_WINDOW_BLOCK,
+            incredibleSquaringCommunityMultisig,
+            IZrServiceManager(address(incredibleSquaringServiceManager))
         );
 
         // Deploy ServiceManager implementation
@@ -284,20 +290,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
             IRewardsCoordinator(address(0x1A17df4170099577b79038Fd310f3ff62F79752E)),
             ZrRegistryCoordinator(address(registryCoordinator)),
             IStakeRegistry(address(stakeRegistry))
-        );
-
-        // Initialize TaskManager first
-        incredibleSquaringProxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(payable(address(incredibleSquaringTaskManager))),
-            address(incredibleSquaringTaskManagerImplementation),
-            abi.encodeWithSelector(
-                ZrTaskManager.initialize.selector,
-                AGGREGATOR_ADDR,
-                TASK_GENERATOR_ADDR,
-                IRegistryCoordinator(address(registryCoordinator)),
-                TASK_RESPONSE_WINDOW_BLOCK,
-                incredibleSquaringCommunityMultisig
-            )
         );
 
         // Initialize ServiceManager with TaskManager address

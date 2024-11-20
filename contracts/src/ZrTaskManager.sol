@@ -8,13 +8,14 @@ import "./libraries/ZrServiceManagerLib.sol";
 import {Initializable} from "../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "./interfaces/IZrServiceManager.sol";
-contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker {
+
+contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
     using BN254 for BN254.G1Point;
 
     uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 10000;
     uint256 internal constant _THRESHOLD_DENOMINATOR = 67;
 
-    /// @custom:storage-location erc7201:zenrock.storage.TaskManager
+    // Storage structure
     struct TaskManagerStorage {
         uint32 TASK_RESPONSE_WINDOW_BLOCK;
         uint32 latestTaskId;
@@ -23,14 +24,29 @@ contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker
         mapping(uint32 => bool) taskSuccesfullyChallenged;
         address aggregator;
         address generator;
-        IRegistryCoordinator registryCoordinator;
         IZrServiceManager zrServiceManager;
     }
 
-    bytes32 private constant TASK_MANAGER_STORAGE_LOCATION = 
+    bytes32 private constant TASK_MANAGER_STORAGE_LOCATION =
         0x9e5d0bf83ef884a66a66b2d439fd65f5546f8f4489c6a744f987ecb90e5d7100;
 
-    constructor(address _registryCoordinator) BLSSignatureChecker(IRegistryCoordinator(_registryCoordinator)) {}
+    constructor(
+        address _aggregator,
+        address _generator,
+        IRegistryCoordinator _registryCoordinator,
+        uint32 _taskResponseWindowBlock,
+        address initialOwner,
+        IZrServiceManager _zrServiceManager
+    ) BLSSignatureChecker(_registryCoordinator) {
+        // Initialize OwnableUpgradeable
+        _transferOwnership(initialOwner);
+
+        TaskManagerStorage storage $ = _getTaskManagerStorage();
+        $.aggregator = _aggregator;
+        $.generator = _generator;
+        $.TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
+        $.zrServiceManager = _zrServiceManager;
+    }
 
     function _getTaskManagerStorage() private pure returns (TaskManagerStorage storage $) {
         assembly {
@@ -48,23 +64,6 @@ contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker
         TaskManagerStorage storage $ = _getTaskManagerStorage();
         require(msg.sender == $.generator, "Task generator must be the caller");
         _;
-    }
-
-    function initialize(
-        address _aggregator,
-        address _generator,
-        IRegistryCoordinator _registryCoordinator,
-        uint32 _taskResponseWindowBlock,
-        address initialOwner,
-        IZrServiceManager _zrServiceManager
-    ) external initializer {
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        $.aggregator = _aggregator;
-        $.generator = _generator;
-        $.registryCoordinator = _registryCoordinator;
-        $.TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
-        $.zrServiceManager = _zrServiceManager;
-        _transferOwnership(initialOwner);
     }
 
     function createNewTask(
