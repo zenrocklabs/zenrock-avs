@@ -1,3 +1,10 @@
+## [1.4.5](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.4...v1.4.5) (2024-11-20)
+
+
+### Bug Fixes
+
+* update deployment addrs + strategy-adder ([ed492d3](https://github.com/zenrocklabs/zenrock-avs/commit/ed492d333a87323477b0674772a8f20484d05f03))
+
 ## [1.4.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.3...v1.4.4) (2024-11-20)
 
 
