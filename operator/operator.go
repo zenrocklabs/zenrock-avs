@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -321,24 +322,24 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	)
 
 	var validatorAddresses []string
-	// pageReq := &query.PageRequest{}
+	pageReq := &query.PageRequest{}
 
-	// for {
-	// 	resp, err := o.zrChainClient.ValidationQueryClient.UnbondedValidators(context.Background(), pageReq)
-	// 	if err != nil {
-	// 		o.logger.Error("Error getting unbonded validators", "err", err)
-	// 	}
+	for {
+		resp, err := o.zrChainClient.ValidationQueryClient.UnbondedValidators(context.Background(), pageReq)
+		if err != nil {
+			o.logger.Error("Error getting unbonded validators", "err", err)
+		}
 
-	// 	for _, validator := range resp.Validators {
-	// 		validatorAddresses = append(validatorAddresses, validator.OperatorAddress)
-	// 	}
+		for _, validator := range resp.Validators {
+			validatorAddresses = append(validatorAddresses, validator.OperatorAddress)
+		}
 
-	// 	if resp.Pagination == nil || len(resp.Pagination.NextKey) == 0 {
-	// 		break
-	// 	}
+		if resp.Pagination == nil || len(resp.Pagination.NextKey) == 0 {
+			break
+		}
 
-	// 	pageReq.Key = resp.Pagination.NextKey
-	// }
+		pageReq.Key = resp.Pagination.NextKey
+	}
 
 	// Create the TaskResponse with the new structure
 	taskResponse := &cstaskmanager.ZrServiceManagerLibTaskResponse{
