@@ -1,3 +1,11 @@
+## [1.4.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.1...v1.4.2) (2024-11-20)
+
+
+### Bug Fixes
+
+* bump `zrchain` ver ([58c815b](https://github.com/zenrocklabs/zenrock-avs/commit/58c815babf102b9770aadc617be92fb67c37324a))
+* uncomment inactive set query tasks ([57d0c85](https://github.com/zenrocklabs/zenrock-avs/commit/57d0c85c4b05628de1f53ed0f6e4476fde0bda60))
+
 ## [1.4.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.0...v1.4.1) (2024-11-20)
 
 
