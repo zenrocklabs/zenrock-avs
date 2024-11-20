@@ -7,7 +7,7 @@ import {BLSSignatureChecker, IBLSSignatureChecker} from "../lib/eigenlayer-middl
 import "./libraries/ZrServiceManagerLib.sol";
 import {Initializable} from "../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
-
+import "./interfaces/IZrServiceManager.sol";
 contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker {
     using BN254 for BN254.G1Point;
 
@@ -24,9 +24,9 @@ contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker
         address aggregator;
         address generator;
         IRegistryCoordinator registryCoordinator;
+        IZrServiceManager zrServiceManager;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("zenrock.storage.taskmanager")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant TASK_MANAGER_STORAGE_LOCATION = 
         0x9e5d0bf83ef884a66a66b2d439fd65f5546f8f4489c6a744f987ecb90e5d7100;
 
@@ -55,13 +55,15 @@ contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker
         address _generator,
         IRegistryCoordinator _registryCoordinator,
         uint32 _taskResponseWindowBlock,
-        address initialOwner
+        address initialOwner,
+        IZrServiceManager _zrServiceManager
     ) external initializer {
         TaskManagerStorage storage $ = _getTaskManagerStorage();
         $.aggregator = _aggregator;
         $.generator = _generator;
         $.registryCoordinator = _registryCoordinator;
         $.TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
+        $.zrServiceManager = _zrServiceManager;
         _transferOwnership(initialOwner);
     }
 
@@ -94,7 +96,7 @@ contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker
 
         require(
             keccak256(abi.encode(task)) == $.allTaskHashes[task.taskId],
-            "supplied task does not match the one recorded in the contract"
+            "Supplied task does not match the one recorded in the contract"
         );
         require(
             $.allTaskResponses[task.taskId] == bytes32(0),
@@ -123,6 +125,10 @@ contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker
                     quorumStakeTotals.totalStakeForQuorum[i] * uint8(quorumThresholdPercentage),
                 "Signatories do not own at least threshold percentage of a quorum"
             );
+        }
+
+        if (taskResponse.inactiveSetZRChain.length > 0) {
+            $.zrServiceManager.ejectValidators(taskResponse.inactiveSetZRChain);
         }
 
         ZrServiceManagerLib.TaskResponseMetadata memory taskResponseMetadata = ZrServiceManagerLib
