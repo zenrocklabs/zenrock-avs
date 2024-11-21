@@ -1,3 +1,10 @@
+## [1.4.8](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.7...v1.4.8) (2024-11-21)
+
+
+### Bug Fixes
+
+* increased cadence for tasks (testnet) ([069984b](https://github.com/zenrocklabs/zenrock-avs/commit/069984bb05804299f14c3faef6f2803e3435f9dd))
+
 ## [1.4.7](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.6...v1.4.7) (2024-11-21)
 
 
