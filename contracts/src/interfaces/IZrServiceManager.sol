@@ -62,8 +62,4 @@ interface IZrServiceManager {
     function getStakedBalanceForValidator(
         string memory validatorAddress
     ) external view returns (uint96);
-
-    function getTaskNumber() external view returns (uint32);
-
-    function getTaskResponseWindowBlock() external view returns (uint32);
 }

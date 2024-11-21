@@ -274,14 +274,22 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        // Deploy ZrTaskManager directly without a proxy
-        incredibleSquaringTaskManager = new ZrTaskManager(
-            AGGREGATOR_ADDR,
-            TASK_GENERATOR_ADDR,
-            IRegistryCoordinator(address(registryCoordinator)),
-            TASK_RESPONSE_WINDOW_BLOCK,
-            incredibleSquaringCommunityMultisig,
-            IZrServiceManager(address(incredibleSquaringServiceManager))
+        // Deploy TaskManager implementation
+        incredibleSquaringTaskManagerImplementation = new ZrTaskManager(
+            IRegistryCoordinator(address(registryCoordinator))
+        );
+
+        // Initialize TaskManager
+        incredibleSquaringProxyAdmin.upgradeAndCall(
+            TransparentUpgradeableProxy(payable(address(incredibleSquaringTaskManager))),
+            address(incredibleSquaringTaskManagerImplementation),
+            abi.encodeWithSelector(
+                ZrTaskManager.initialize.selector,
+                AGGREGATOR_ADDR,
+                TASK_GENERATOR_ADDR,
+                TASK_RESPONSE_WINDOW_BLOCK,
+                IZrServiceManager(address(incredibleSquaringServiceManager))
+            )
         );
 
         // Deploy ServiceManager implementation
