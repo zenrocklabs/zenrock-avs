@@ -72,7 +72,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
     ZrServiceManager public incredibleSquaringServiceManagerImplementation;
 
     ZrTaskManager public incredibleSquaringTaskManager;
-    ZrTaskManager public incredibleSquaringTaskManagerImplementation;
+    // ZrTaskManager public incredibleSquaringTaskManagerImplementation;
 
     function run() external {
         string memory eigenlayerDeployedContracts = readOutput("eigenlayer_deployment_output");
@@ -274,22 +274,14 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        // Deploy TaskManager implementation
-        incredibleSquaringTaskManagerImplementation = new ZrTaskManager(
-            IRegistryCoordinator(address(registryCoordinator))
-        );
-
-        // Initialize TaskManager
-        incredibleSquaringProxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(payable(address(incredibleSquaringTaskManager))),
-            address(incredibleSquaringTaskManagerImplementation),
-            abi.encodeWithSelector(
-                ZrTaskManager.initialize.selector,
-                AGGREGATOR_ADDR,
-                TASK_GENERATOR_ADDR,
-                TASK_RESPONSE_WINDOW_BLOCK,
-                IZrServiceManager(address(incredibleSquaringServiceManager))
-            )
+        // Deploy TaskManager
+        incredibleSquaringTaskManager = new ZrTaskManager(
+            AGGREGATOR_ADDR,
+            TASK_GENERATOR_ADDR,
+            IRegistryCoordinator(address(registryCoordinator)),
+            TASK_RESPONSE_WINDOW_BLOCK,
+            msg.sender, // or your desired owner address
+            IZrServiceManager(address(incredibleSquaringServiceManager))
         );
 
         // Deploy ServiceManager implementation
@@ -316,10 +308,10 @@ contract IncredibleSquaringDeployer is Script, Utils {
         string memory parent_object = "parent object";
         string memory deployed_addresses = "addresses";
 
-        vm.serializeAddress(deployed_addresses, "incredibleSquaringServiceManager", address(incredibleSquaringServiceManager));
-        vm.serializeAddress(deployed_addresses, "incredibleSquaringServiceManagerImplementation", address(incredibleSquaringServiceManagerImplementation));
-        vm.serializeAddress(deployed_addresses, "incredibleSquaringTaskManager", address(incredibleSquaringTaskManager));
-        vm.serializeAddress(deployed_addresses, "incredibleSquaringTaskManagerImplementation", address(incredibleSquaringTaskManagerImplementation));
+        vm.serializeAddress(deployed_addresses, "credibleSquaringServiceManager", address(incredibleSquaringServiceManager));
+        vm.serializeAddress(deployed_addresses, "credibleSquaringServiceManagerImplementation", address(incredibleSquaringServiceManagerImplementation));
+        vm.serializeAddress(deployed_addresses, "credibleSquaringTaskManager", address(incredibleSquaringTaskManager));
+        // vm.serializeAddress(deployed_addresses, "credibleSquaringTaskManagerImplementation", address(incredibleSquaringTaskManagerImplementation));
         vm.serializeAddress(deployed_addresses, "registryCoordinator", address(registryCoordinator));
         vm.serializeAddress(deployed_addresses, "registryCoordinatorImplementation", address(registryCoordinatorImplementation));
         vm.serializeAddress(deployed_addresses, "stakeRegistry", address(stakeRegistry));
@@ -329,6 +321,6 @@ contract IncredibleSquaringDeployer is Script, Utils {
         string memory deployed_addresses_output = vm.serializeAddress(deployed_addresses, "operatorStateRetriever", address(operatorStateRetriever));
 
         string memory finalJson = vm.serializeString(parent_object, deployed_addresses, deployed_addresses_output);
-        writeOutput(finalJson, "incredible_squaring_avs_deployment_output");
+        writeOutput(finalJson, "credible_squaring_avs_deployment_output");
     }
 }

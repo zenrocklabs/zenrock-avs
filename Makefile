@@ -4,8 +4,8 @@
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-AGGREGATOR_ECDSA_PRIV_KEY=0xe273a486433d6a3fe65560a4f24401965ce99e37c99e31a4cdd476821d82887e
-CHALLENGER_ECDSA_PRIV_KEY=0xe273a486433d6a3fe65560a4f24401965ce99e37c99e31a4cdd476821d82887e
+AGGREGATOR_ECDSA_PRIV_KEY=
+CHALLENGER_ECDSA_PRIV_KEY=
 
 CHAINID=17000
 # Make sure to update this if the strategy address changes

@@ -141,6 +141,9 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 	}
 	agg.currentTaskId = latestTaskNumber + 1
 
+	agg.sendNewTask()
+	agg.currentTaskId++
+
 	for {
 		select {
 		case <-ctx.Done():
