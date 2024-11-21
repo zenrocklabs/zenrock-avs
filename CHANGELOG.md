@@ -1,3 +1,10 @@
+## [1.4.6](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.5...v1.4.6) (2024-11-21)
+
+
+### Bug Fixes
+
+* refactor contracts ([#4](https://github.com/zenrocklabs/zenrock-avs/issues/4)) ([b9cd0f6](https://github.com/zenrocklabs/zenrock-avs/commit/b9cd0f6215d5e8ec913833222af543b2312a2f97))
+
 ## [1.4.5](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.4...v1.4.5) (2024-11-20)
 
 
