@@ -29,7 +29,7 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 	avsName                  = "zenrock"
 
-	taskCadence = 15 * time.Second
+	taskCadence = 15 * time.Minute
 )
 
 // Aggregator sends tasks (numbers to square) onchain, then listens for operator signed TaskResponses.
@@ -130,7 +130,7 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 
 	// TODO(soubhik): refactor task generation/sending into a separate function that we can run as goroutine
 	ticker := time.NewTicker(taskCadence)
-	agg.logger.Infof("Aggregator set to send new task every 15 seconds...")
+	agg.logger.Infof("Aggregator set to send new task every 15 minutes...")
 	defer ticker.Stop()
 
 	// Initialize currentTaskId
