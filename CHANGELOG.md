@@ -1,3 +1,10 @@
+## [1.4.7](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.6...v1.4.7) (2024-11-21)
+
+
+### Bug Fixes
+
+* revert taskmanager changes + aggregator instantly sends task ([2fb2d72](https://github.com/zenrocklabs/zenrock-avs/commit/2fb2d72127c5ac2946020077737725d97fa96336))
+
 ## [1.4.6](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.5...v1.4.6) (2024-11-21)
 
 
