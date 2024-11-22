@@ -1,5 +1,5 @@
 # 'production' only prints info and above. 'development' also prints debug
-environment: production
+environment: development
 eth_rpc_url: 
 eth_ws_url: 
 # address which the aggregator listens on for operator signed messages

@@ -29,7 +29,9 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 	avsName                  = "zenrock"
 
-	taskCadence = 15 * time.Minute
+	taskCadence               = 5 * time.Minute
+	responseDelay             = 30 * time.Second
+	quorumThresholdPercentage = 67
 )
 
 // Aggregator sends tasks (numbers to square) onchain, then listens for operator signed TaskResponses.
@@ -130,7 +132,7 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 
 	// TODO(soubhik): refactor task generation/sending into a separate function that we can run as goroutine
 	ticker := time.NewTicker(taskCadence)
-	agg.logger.Infof("Aggregator set to send new task every 15 minutes...")
+	agg.logger.Infof("Aggregator set to send new task every %s...", taskCadence)
 	defer ticker.Stop()
 
 	// Initialize currentTaskId
@@ -186,8 +188,9 @@ func (agg *Aggregator) sendAggregatedResponseToContract(blsAggServiceResp blsagg
 		NonSignerStakeIndices:        blsAggServiceResp.NonSignerStakeIndices,
 	}
 
-	agg.logger.Info("Threshold reached. Sending aggregated response onchain.",
-		"taskIndex", blsAggServiceResp.TaskIndex,
+	agg.logger.Infof("Threshold reached for task %d. Sending aggregated response onchain in %s...",
+		blsAggServiceResp.TaskIndex,
+		responseDelay,
 	)
 	agg.tasksMu.RLock()
 	task := agg.tasks[blsAggServiceResp.TaskIndex]
@@ -195,6 +198,7 @@ func (agg *Aggregator) sendAggregatedResponseToContract(blsAggServiceResp blsagg
 	agg.taskResponsesMu.RLock()
 	taskResponse := agg.taskResponses[blsAggServiceResp.TaskIndex][blsAggServiceResp.TaskResponseDigest]
 	agg.taskResponsesMu.RUnlock()
+	time.Sleep(responseDelay)
 	_, err := agg.avsWriter.SendAggregatedResponse(context.Background(), task, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		agg.logger.Error("Aggregator failed to respond to task", "err", err)
@@ -207,7 +211,7 @@ func (agg *Aggregator) sendNewTask() error {
 	agg.logger.Info("Aggregator sending new task", "taskId", agg.currentTaskId)
 
 	// Send task to the task manager contract
-	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, types.QUORUM_THRESHOLD_NUMERATOR, types.QUORUM_NUMBERS)
+	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, quorumThresholdPercentage, types.QUORUM_NUMBERS)
 	if err != nil {
 		agg.logger.Error("Aggregator failed to send new task", "err", err)
 		return err
