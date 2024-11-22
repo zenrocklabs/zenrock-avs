@@ -280,7 +280,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
             TASK_GENERATOR_ADDR,
             IRegistryCoordinator(address(registryCoordinator)),
             TASK_RESPONSE_WINDOW_BLOCK,
-            msg.sender, // or your desired owner address
+            incredibleSquaringCommunityMultisig,
             IZrServiceManager(address(incredibleSquaringServiceManager))
         );
 
@@ -300,7 +300,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
                 ZrServiceManager.initialize.selector,
                 incredibleSquaringPauserReg,
                 incredibleSquaringCommunityMultisig,
-                IZRTaskManager(address(incredibleSquaringTaskManager)) // Pass the TaskManager address
+                IZRTaskManager(address(incredibleSquaringTaskManager))
             )
         );
 

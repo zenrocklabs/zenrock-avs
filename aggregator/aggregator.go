@@ -207,7 +207,7 @@ func (agg *Aggregator) sendNewTask() error {
 	agg.logger.Info("Aggregator sending new task", "taskId", agg.currentTaskId)
 
 	// Send task to the task manager contract
-	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, types.QUORUM_THRESHOLD_NUMERATOR, types.QUORUM_NUMBERS)
+	newTask, taskIndex, err := agg.avsWriter.SendNewTask(context.Background(), agg.currentTaskId, sdktypes.QuorumThresholdPercentage(67), types.QUORUM_NUMBERS)
 	if err != nil {
 		agg.logger.Error("Aggregator failed to send new task", "err", err)
 		return err

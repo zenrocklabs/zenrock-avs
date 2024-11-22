@@ -1,6 +1,6 @@
 # 'production' only prints info and above. 'development' also prints debug
-environment: production
-eth_rpc_url: 
-eth_ws_url: 
+environment: development
+eth_rpc_url: https://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/
+eth_ws_url:    wss://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/
 # address which the aggregator listens on for operator signed messages
 aggregator_server_ip_port_address: localhost:8090
