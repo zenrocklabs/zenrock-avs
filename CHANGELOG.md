@@ -1,3 +1,10 @@
+## [1.4.11](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.10...v1.4.11) (2024-11-22)
+
+
+### Bug Fixes
+
+* add proxy for TaskManager ([#5](https://github.com/zenrocklabs/zenrock-avs/issues/5)) ([7f6608c](https://github.com/zenrocklabs/zenrock-avs/commit/7f6608cd8cf212607a1a5278c4fbca40f984dd20))
+
 ## [1.4.10](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.9...v1.4.10) (2024-11-22)
 
 
