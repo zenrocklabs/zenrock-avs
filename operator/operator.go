@@ -312,7 +312,7 @@ func (o *Operator) Start(ctx context.Context) error {
 
 // ProcessNewTaskCreatedLog takes a NewTaskCreatedLog struct as input and returns a TaskResponse struct.
 // The TaskResponse struct is the struct that is signed and sent to the contract as a task response.
-func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZrTaskManagerNewTaskCreated) *cstaskmanager.ZrServiceManagerLibTaskResponse {
+func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZrTaskManagerNewTaskCreated) *cstaskmanager.IZRTaskManagerTaskResponse {
 	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
 	o.logger.Info("Received new task",
 		"taskId", newTaskCreatedLog.Task.TaskId,
@@ -342,7 +342,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	}
 
 	// Create the TaskResponse with the new structure
-	taskResponse := &cstaskmanager.ZrServiceManagerLibTaskResponse{
+	taskResponse := &cstaskmanager.IZRTaskManagerTaskResponse{
 		ReferenceTaskId:    newTaskCreatedLog.Task.TaskId,
 		InactiveSetZRChain: validatorAddresses,
 	}
@@ -350,7 +350,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	return taskResponse
 }
 
-func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.ZrServiceManagerLibTaskResponse) (*aggregator.SignedTaskResponse, error) {
+func (o *Operator) SignTaskResponse(taskResponse *cstaskmanager.IZRTaskManagerTaskResponse) (*aggregator.SignedTaskResponse, error) {
 	taskResponseHash, err := core.GetTaskResponseDigest(taskResponse)
 	if err != nil {
 		o.logger.Error("Error getting task response header hash. skipping task (this is not expected and should be investigated)", "err", err)

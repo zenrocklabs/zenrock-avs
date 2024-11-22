@@ -40,7 +40,7 @@ func (agg *Aggregator) startServer(ctx context.Context) error {
 
 // Update the SignedTaskResponse struct to reflect the new task structure
 type SignedTaskResponse struct {
-	TaskResponse cstaskmanager.ZrServiceManagerLibTaskResponse
+	TaskResponse cstaskmanager.IZRTaskManagerTaskResponse
 	BlsSignature bls.Signature
 	OperatorId   types.OperatorId
 }
@@ -56,7 +56,7 @@ func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskR
 	}
 	agg.taskResponsesMu.Lock()
 	if _, ok := agg.taskResponses[taskId]; !ok {
-		agg.taskResponses[taskId] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.ZrServiceManagerLibTaskResponse)
+		agg.taskResponses[taskId] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.IZRTaskManagerTaskResponse)
 	}
 	if _, ok := agg.taskResponses[taskId][taskResponseDigest]; !ok {
 		agg.taskResponses[taskId][taskResponseDigest] = signedTaskResponse.TaskResponse

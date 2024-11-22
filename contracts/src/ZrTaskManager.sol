@@ -4,7 +4,6 @@ pragma solidity ^0.8.21;
 import "@openzeppelin-upgrades/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin-upgrades/contracts/access/OwnableUpgradeable.sol";
 import "@eigenlayer/contracts/permissions/Pausable.sol";
-import "@eigenlayer-middleware/src/interfaces/IServiceManager.sol";
 import {BLSApkRegistry} from "@eigenlayer-middleware/src/BLSApkRegistry.sol";
 import {BLSSignatureChecker, IRegistryCoordinator} from "@eigenlayer-middleware/src/BLSSignatureChecker.sol";
 import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
@@ -170,73 +169,73 @@ contract ZrTaskManager is
     // NOTE: this function enables a challenger to raise and resolve a challenge.
     // TODO: require challenger to pay a bond for raising a challenge
     // TODO(samlaf): should we check that quorumNumbers is same as the one recorded in the task?
-    function raiseAndResolveChallenge(
-        Task calldata task,
-        TaskResponse calldata taskResponse,
-        TaskResponseMetadata calldata taskResponseMetadata,
-        BN254.G1Point[] memory pubkeysOfNonSigningOperators
-    ) external {
-        uint32 referenceTaskId = taskResponse.referenceTaskId;
+    // function raiseAndResolveChallenge(
+    //     Task calldata task,
+    //     TaskResponse calldata taskResponse,
+    //     TaskResponseMetadata calldata taskResponseMetadata,
+    //     BN254.G1Point[] memory pubkeysOfNonSigningOperators
+    // ) external {
+    //     uint32 referenceTaskId = taskResponse.referenceTaskId;
         
-        require(
-            allTaskResponses[referenceTaskId] != bytes32(0),
-            "Task hasn't been responded to yet"
-        );
-        require(
-            allTaskResponses[referenceTaskId] ==
-                keccak256(abi.encode(taskResponse, taskResponseMetadata)),
-            "Task response does not match the one recorded in the contract"
-        );
-        require(
-            taskSuccesfullyChallenged[referenceTaskId] == false,
-            "The response to this task has already been challenged successfully."
-        );
-        require(
-            uint32(block.number) <=
-                taskResponseMetadata.taskResponsedBlock +
-                    TASK_CHALLENGE_WINDOW_BLOCK,
-            "The challenge period for this task has already expired."
-        );
+    //     require(
+    //         allTaskResponses[referenceTaskId] != bytes32(0),
+    //         "Task hasn't been responded to yet"
+    //     );
+    //     require(
+    //         allTaskResponses[referenceTaskId] ==
+    //             keccak256(abi.encode(taskResponse, taskResponseMetadata)),
+    //         "Task response does not match the one recorded in the contract"
+    //     );
+    //     require(
+    //         taskSuccesfullyChallenged[referenceTaskId] == false,
+    //         "The response to this task has already been challenged successfully."
+    //     );
+    //     require(
+    //         uint32(block.number) <=
+    //             taskResponseMetadata.taskResponsedBlock +
+    //                 TASK_CHALLENGE_WINDOW_BLOCK,
+    //         "The challenge period for this task has already expired."
+    //     );
 
-        // Verify that the taskId matches
-        require(
-            task.taskId == taskResponse.referenceTaskId,
-            "Task ID mismatch"
-        );
+    //     // Verify that the taskId matches
+    //     require(
+    //         task.taskId == taskResponse.referenceTaskId,
+    //         "Task ID mismatch"
+    //     );
 
-        // get the list of hash of pubkeys of operators who weren't part of the task response submitted by the aggregator
-        bytes32[] memory hashesOfPubkeysOfNonSigningOperators = new bytes32[](
-            pubkeysOfNonSigningOperators.length
-        );
-        for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
-            hashesOfPubkeysOfNonSigningOperators[i] = pubkeysOfNonSigningOperators[i].hashG1Point();
-        }
+    //     // get the list of hash of pubkeys of operators who weren't part of the task response submitted by the aggregator
+    //     bytes32[] memory hashesOfPubkeysOfNonSigningOperators = new bytes32[](
+    //         pubkeysOfNonSigningOperators.length
+    //     );
+    //     for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
+    //         hashesOfPubkeysOfNonSigningOperators[i] = pubkeysOfNonSigningOperators[i].hashG1Point();
+    //     }
 
-        // verify whether the pubkeys of "claimed" non-signers supplied by challenger are actually non-signers as recorded before
-        // when the aggregator responded to the task
-        // currently inlined, as the MiddlewareUtils.computeSignatoryRecordHash function was removed from BLSSignatureChecker
-        // in this PR: https://github.com/Layr-Labs/eigenlayer-contracts/commit/c836178bf57adaedff37262dff1def18310f3dce#diff-8ab29af002b60fc80e3d6564e37419017c804ae4e788f4c5ff468ce2249b4386L155-L158
-        // TODO(samlaf): contracts team will add this function back in the BLSSignatureChecker, which we should use to prevent potential bugs from code duplication
-        bytes32 signatoryRecordHash = keccak256(
-            abi.encodePacked(
-                task.taskCreatedBlock,
-                hashesOfPubkeysOfNonSigningOperators
-            )
-        );
-        require(
-            signatoryRecordHash == taskResponseMetadata.hashOfNonSigners,
-            "The pubkeys of non-signing operators supplied by the challenger are not correct."
-        );
+    //     // verify whether the pubkeys of "claimed" non-signers supplied by challenger are actually non-signers as recorded before
+    //     // when the aggregator responded to the task
+    //     // currently inlined, as the MiddlewareUtils.computeSignatoryRecordHash function was removed from BLSSignatureChecker
+    //     // in this PR: https://github.com/Layr-Labs/eigenlayer-contracts/commit/c836178bf57adaedff37262dff1def18310f3dce#diff-8ab29af002b60fc80e3d6564e37419017c804ae4e788f4c5ff468ce2249b4386L155-L158
+    //     // TODO(samlaf): contracts team will add this function back in the BLSSignatureChecker, which we should use to prevent potential bugs from code duplication
+    //     bytes32 signatoryRecordHash = keccak256(
+    //         abi.encodePacked(
+    //             task.taskCreatedBlock,
+    //             hashesOfPubkeysOfNonSigningOperators
+    //         )
+    //     );
+    //     require(
+    //         signatoryRecordHash == taskResponseMetadata.hashOfNonSigners,
+    //         "The pubkeys of non-signing operators supplied by the challenger are not correct."
+    //     );
 
-        // get the address of operators who didn't sign
-        address[] memory addresssOfNonSigningOperators = new address[](
-            pubkeysOfNonSigningOperators.length
-        );
-        for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
-            addresssOfNonSigningOperators[i] = BLSApkRegistry(
-                address(blsApkRegistry)
-            ).pubkeyHashToOperator(hashesOfPubkeysOfNonSigningOperators[i]);
-        }
+    //     // get the address of operators who didn't sign
+    //     address[] memory addresssOfNonSigningOperators = new address[](
+    //         pubkeysOfNonSigningOperators.length
+    //     );
+    //     for (uint i = 0; i < pubkeysOfNonSigningOperators.length; i++) {
+    //         addresssOfNonSigningOperators[i] = BLSApkRegistry(
+    //             address(blsApkRegistry)
+    //         ).pubkeyHashToOperator(hashesOfPubkeysOfNonSigningOperators[i]);
+    //     }
 
         // @dev the below code is commented out for the upcoming M2 release
         //      in which there will be no slashing. The slasher is also being redesigned
@@ -297,10 +296,10 @@ contract ZrTaskManager is
         // }
 
         // the task response has been challenged successfully
-        taskSuccesfullyChallenged[referenceTaskId] = true;
+    //     taskSuccesfullyChallenged[referenceTaskId] = true;
 
-        emit TaskChallengedSuccessfully(referenceTaskId, msg.sender);
-    }
+    //     emit TaskChallengedSuccessfully(referenceTaskId, msg.sender);
+    // }
 
     function getTaskResponseWindowBlock() external view returns (uint32) {
         return TASK_RESPONSE_WINDOW_BLOCK;

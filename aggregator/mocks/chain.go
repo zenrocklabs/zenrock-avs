@@ -11,8 +11,8 @@ import (
 
 // ====== TaskManager Mocks ======
 
-func MockSendNewTaskNumberToSquareCall(blockNum, taskNum, numberToSquare uint32) (cstaskmanager.ZrServiceManagerLibTask, uint32, error) {
-	task := cstaskmanager.ZrServiceManagerLibTask{
+func MockSendNewTaskNumberToSquareCall(blockNum, taskNum, numberToSquare uint32) (cstaskmanager.IZRTaskManagerTask, uint32, error) {
+	task := cstaskmanager.IZRTaskManagerTask{
 		// NumberToBeSquared:         big.NewInt(int64(numberToSquare)),
 		TaskCreatedBlock:          blockNum,
 		QuorumNumbers:             types.QUORUM_NUMBERS.UnderlyingType(),

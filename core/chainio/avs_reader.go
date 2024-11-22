@@ -67,7 +67,7 @@ func (r *AvsReader) CheckSignatures(
 }
 
 func (r *AvsReader) GetLatestTaskNumber(ctx context.Context) (uint32, error) {
-	latestTask, err := r.AvsServiceBindings.TaskManager.GetTaskNumber(&bind.CallOpts{})
+	latestTask, err := r.AvsServiceBindings.TaskManager.TaskNumber(&bind.CallOpts{})
 	if err != nil {
 		return 0, err
 	}

@@ -7,8 +7,8 @@ import (
 )
 
 type TaskResponseData struct {
-	TaskResponse              cstaskmanager.ZrServiceManagerLibTaskResponse
-	TaskResponseMetadata      cstaskmanager.ZrServiceManagerLibTaskResponseMetadata
+	TaskResponse              cstaskmanager.IZRTaskManagerTaskResponse
+	TaskResponseMetadata      cstaskmanager.IZRTaskManagerTaskResponseMetadata
 	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
 }
 

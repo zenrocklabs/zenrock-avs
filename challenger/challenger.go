@@ -22,7 +22,7 @@ type Challenger struct {
 	avsReader          chainio.AvsReaderer
 	avsWriter          chainio.AvsWriterer
 	avsSubscriber      chainio.AvsSubscriberer
-	tasks              map[uint32]cstaskmanager.ZrServiceManagerLibTask
+	tasks              map[uint32]cstaskmanager.IZRTaskManagerTask
 	taskResponses      map[uint32]types.TaskResponseData
 	taskResponseChan   chan *cstaskmanager.ContractZrTaskManagerTaskResponded
 	newTaskCreatedChan chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated
@@ -52,7 +52,7 @@ func NewChallenger(c *config.Config) (*Challenger, error) {
 		avsWriter:          avsWriter,
 		avsReader:          avsReader,
 		avsSubscriber:      avsSubscriber,
-		tasks:              make(map[uint32]cstaskmanager.ZrServiceManagerLibTask),
+		tasks:              make(map[uint32]cstaskmanager.IZRTaskManagerTask),
 		taskResponses:      make(map[uint32]types.TaskResponseData),
 		taskResponseChan:   make(chan *cstaskmanager.ContractZrTaskManagerTaskResponded),
 		newTaskCreatedChan: make(chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated),
@@ -126,13 +126,13 @@ func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.Contr
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(taskResponseLog)
 	taskResponseData := types.TaskResponseData{
-		TaskResponse:              taskResponseLog.Response,
-		TaskResponseMetadata:      taskResponseLog.Metadata,
+		TaskResponse:              taskResponseLog.TaskResponse,
+		TaskResponseMetadata:      taskResponseLog.TaskResponseMetadata,
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
-	c.taskResponses[taskResponseRawLog.Response.ReferenceTaskId] = taskResponseData
-	return taskResponseRawLog.Response.ReferenceTaskId
+	c.taskResponses[taskResponseRawLog.TaskResponse.ReferenceTaskId] = taskResponseData
+	return taskResponseRawLog.TaskResponse.ReferenceTaskId
 }
 
 func (c *Challenger) callChallengeModule(taskIndex uint32) error {
@@ -220,24 +220,24 @@ func (c *Challenger) getNonSigningOperatorPubKeys(vLog *cstaskmanager.ContractZr
 	return nonSigningOperatorPubKeys
 }
 
-func (c *Challenger) raiseChallenge(taskIndex uint32) error {
-	c.logger.Info("Challenger raising challenge.", "taskIndex", taskIndex)
-	c.logger.Info("Task", "Task", c.tasks[taskIndex])
-	c.logger.Info("TaskResponse", "TaskResponse", c.taskResponses[taskIndex].TaskResponse)
-	c.logger.Info("TaskResponseMetadata", "TaskResponseMetadata", c.taskResponses[taskIndex].TaskResponseMetadata)
-	c.logger.Info("NonSigningOperatorPubKeys", "NonSigningOperatorPubKeys", c.taskResponses[taskIndex].NonSigningOperatorPubKeys)
+// func (c *Challenger) raiseChallenge(taskIndex uint32) error {
+// 	c.logger.Info("Challenger raising challenge.", "taskIndex", taskIndex)
+// 	c.logger.Info("Task", "Task", c.tasks[taskIndex])
+// 	c.logger.Info("TaskResponse", "TaskResponse", c.taskResponses[taskIndex].TaskResponse)
+// 	c.logger.Info("TaskResponseMetadata", "TaskResponseMetadata", c.taskResponses[taskIndex].TaskResponseMetadata)
+// 	c.logger.Info("NonSigningOperatorPubKeys", "NonSigningOperatorPubKeys", c.taskResponses[taskIndex].NonSigningOperatorPubKeys)
 
-	receipt, err := c.avsWriter.RaiseChallenge(
-		context.Background(),
-		c.tasks[taskIndex],
-		c.taskResponses[taskIndex].TaskResponse,
-		c.taskResponses[taskIndex].TaskResponseMetadata,
-		c.taskResponses[taskIndex].NonSigningOperatorPubKeys,
-	)
-	if err != nil {
-		c.logger.Error("Challenger failed to raise challenge:", "err", err)
-		return err
-	}
-	c.logger.Infof("Tx hash of the challenge tx: %v", receipt.TxHash.Hex())
-	return nil
-}
+// 	receipt, err := c.avsWriter.RaiseChallenge(
+// 		context.Background(),
+// 		c.tasks[taskIndex],
+// 		c.taskResponses[taskIndex].TaskResponse,
+// 		c.taskResponses[taskIndex].TaskResponseMetadata,
+// 		c.taskResponses[taskIndex].NonSigningOperatorPubKeys,
+// 	)
+// 	if err != nil {
+// 		c.logger.Error("Challenger failed to raise challenge:", "err", err)
+// 		return err
+// 	}
+// 	c.logger.Infof("Tx hash of the challenge tx: %v", receipt.TxHash.Hex())
+// 	return nil
+// }

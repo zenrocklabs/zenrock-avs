@@ -76,6 +76,6 @@ func MockTaskResponseLog() gethtypes.Log {
 	}
 }
 
-func MockTaskResponseReferenceTaskIndex(taskResponse cstaskmanager.ZrServiceManagerLibTaskResponse) uint32 {
+func MockTaskResponseReferenceTaskIndex(taskResponse cstaskmanager.IZRTaskManagerTaskResponse) uint32 {
 	return taskResponse.ReferenceTaskId
 }

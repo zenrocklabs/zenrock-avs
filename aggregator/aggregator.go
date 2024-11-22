@@ -72,9 +72,9 @@ type Aggregator struct {
 	avsReader        chainio.AvsReaderer
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
-	tasks                 map[types.TaskId]cstaskmanager.ZrServiceManagerLibTask
+	tasks                 map[types.TaskId]cstaskmanager.IZRTaskManagerTask
 	tasksMu               sync.RWMutex
-	taskResponses         map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZrServiceManagerLibTaskResponse
+	taskResponses         map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.IZRTaskManagerTaskResponse
 	taskResponsesMu       sync.RWMutex
 	currentTaskId         uint32
 }
@@ -118,8 +118,8 @@ func NewAggregator(c *config.Config) (*Aggregator, error) {
 		avsWriter:             avsWriter,
 		avsReader:             avsReader,
 		blsAggregationService: blsAggregationService,
-		tasks:                 make(map[types.TaskId]cstaskmanager.ZrServiceManagerLibTask),
-		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.ZrServiceManagerLibTaskResponse),
+		tasks:                 make(map[types.TaskId]cstaskmanager.IZRTaskManagerTask),
+		taskResponses:         make(map[types.TaskId]map[sdktypes.TaskResponseDigest]cstaskmanager.IZRTaskManagerTaskResponse),
 	}, nil
 }
 

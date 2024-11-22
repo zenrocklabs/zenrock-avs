@@ -63,12 +63,12 @@ interface IZRTaskManager {
 
     function taskNumber() external view returns (uint32);
 
-    function raiseAndResolveChallenge(
-        Task calldata task,
-        TaskResponse calldata taskResponse,
-        TaskResponseMetadata calldata taskResponseMetadata,
-        BN254.G1Point[] memory pubkeysOfNonSigningOperators
-    ) external;
+    // function raiseAndResolveChallenge(
+    //     Task calldata task,
+    //     TaskResponse calldata taskResponse,
+    //     TaskResponseMetadata calldata taskResponseMetadata,
+    //     BN254.G1Point[] memory pubkeysOfNonSigningOperators
+    // ) external;
 
     function getTaskResponseWindowBlock() external view returns (uint32);
 }

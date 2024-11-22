@@ -11,7 +11,7 @@ import (
 
 // this hardcodes abi.encode() for cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 // unclear why abigen doesn't provide this out of the box...
-func AbiEncodeTaskResponse(h *cstaskmanager.ZrServiceManagerLibTaskResponse) ([]byte, error) {
+func AbiEncodeTaskResponse(h *cstaskmanager.IZRTaskManagerTaskResponse) ([]byte, error) {
 
 	// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
@@ -42,7 +42,7 @@ func AbiEncodeTaskResponse(h *cstaskmanager.ZrServiceManagerLibTaskResponse) ([]
 }
 
 // GetTaskResponseDigest returns the hash of the TaskResponse, which is what operators sign over
-func GetTaskResponseDigest(h *cstaskmanager.ZrServiceManagerLibTaskResponse) ([32]byte, error) {
+func GetTaskResponseDigest(h *cstaskmanager.IZRTaskManagerTaskResponse) ([32]byte, error) {
 
 	encodeTaskResponseByte, err := AbiEncodeTaskResponse(h)
 	if err != nil {
