@@ -1,3 +1,10 @@
+## [1.4.10](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.9...v1.4.10) (2024-11-22)
+
+
+### Bug Fixes
+
+* add response delay to aggregator ([21ab304](https://github.com/zenrocklabs/zenrock-avs/commit/21ab304cdce4ed76d2695b0801588b9ede200205))
+
 ## [1.4.9](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.8...v1.4.9) (2024-11-21)
 
 
