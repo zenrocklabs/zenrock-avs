@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,7 +30,7 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 	avsName                  = "zenrock"
 
-	taskCadence = 30 * time.Second
+	taskCadence = 120 * time.Second
 )
 
 // Aggregator sends tasks (numbers to square) onchain, then listens for operator signed TaskResponses.
@@ -191,10 +192,13 @@ func (agg *Aggregator) sendAggregatedResponseToContract(blsAggServiceResp blsagg
 	)
 	agg.tasksMu.RLock()
 	task := agg.tasks[blsAggServiceResp.TaskIndex]
+	agg.logger.Info("Task", "task", fmt.Sprintf("%+v", task))
 	agg.tasksMu.RUnlock()
 	agg.taskResponsesMu.RLock()
 	taskResponse := agg.taskResponses[blsAggServiceResp.TaskIndex][blsAggServiceResp.TaskResponseDigest]
+	agg.logger.Info("Task response", "taskResponse", fmt.Sprintf("%+v", taskResponse))
 	agg.taskResponsesMu.RUnlock()
+	time.Sleep(30 * time.Second)
 	_, err := agg.avsWriter.SendAggregatedResponse(context.Background(), task, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		agg.logger.Error("Aggregator failed to respond to task", "err", err)

@@ -22,6 +22,8 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         mapping(uint32 => bytes32) allTaskHashes;
         mapping(uint32 => bytes32) allTaskResponses;
         mapping(uint32 => bool) taskSuccesfullyChallenged;
+        mapping(uint32 => ZrServiceManagerLib.Task) tasks;  // Added: Store actual tasks
+        uint32[] taskIds;  // Added: Array to track all task IDs
         address aggregator;
         address generator;
         IZrServiceManager zrServiceManager;
@@ -79,8 +81,66 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         
         TaskManagerStorage storage $ = _getTaskManagerStorage();
         $.allTaskHashes[taskId] = keccak256(abi.encode(newTask));
+        $.tasks[taskId] = newTask;  // Store the actual task
+        $.taskIds.push(taskId);     // Track the task ID
         emit NewTaskCreated(taskId, newTask);
         $.latestTaskId = taskId;
+    }
+
+    // Added: Get a specific task by ID
+    function getTask(uint32 taskId) external view returns (ZrServiceManagerLib.Task memory) {
+        TaskManagerStorage storage $ = _getTaskManagerStorage();
+        require($.allTaskHashes[taskId] != bytes32(0), "Task does not exist");
+        return $.tasks[taskId];
+    }
+
+    // Added: Get all task IDs
+    function getAllTaskIds() external view returns (uint32[] memory) {
+        TaskManagerStorage storage $ = _getTaskManagerStorage();
+        return $.taskIds;
+    }
+
+    // Added: Get task hash by ID
+    function getTaskHash(uint32 taskId) external view returns (bytes32) {
+        TaskManagerStorage storage $ = _getTaskManagerStorage();
+        return $.allTaskHashes[taskId];
+    }
+
+    // Added: Check if task was challenged successfully
+    function isTaskChallenged(uint32 taskId) external view returns (bool) {
+        TaskManagerStorage storage $ = _getTaskManagerStorage();
+        return $.taskSuccesfullyChallenged[taskId];
+    }
+
+    // Added: Get all task details for a specific ID
+    function getTaskDetails(uint32 taskId) external view returns (
+        ZrServiceManagerLib.Task memory task,
+        bytes32 taskHash,
+        bytes32 taskResponse,
+        bool isChallenged
+    ) {
+        TaskManagerStorage storage $ = _getTaskManagerStorage();
+        require($.allTaskHashes[taskId] != bytes32(0), "Task does not exist");
+        
+        return (
+            $.tasks[taskId],
+            $.allTaskHashes[taskId],
+            $.allTaskResponses[taskId],
+            $.taskSuccesfullyChallenged[taskId]
+        );
+    }
+
+    // Helper function to convert bytes32 to hex string
+    function toHexString(bytes32 value) internal pure returns (string memory) {
+        bytes memory buffer = new bytes(64);
+        bytes16 HEX_DIGITS = "0123456789abcdef";
+        
+        for(uint256 i = 0; i < 32; i++) {
+            buffer[i*2] = HEX_DIGITS[uint8(value[i] >> 4)];
+            buffer[i*2+1] = HEX_DIGITS[uint8(value[i] & 0x0f)];
+        }
+        
+        return string(buffer);
     }
 
     function respondToTask(
@@ -93,10 +153,8 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         uint32 quorumThresholdPercentage = task.quorumThresholdPercentage;
         TaskManagerStorage storage $ = _getTaskManagerStorage();
 
-        require(
-            keccak256(abi.encode(task)) == $.allTaskHashes[task.taskId],
-            "Supplied task does not match the one recorded in the contract"
-        );
+        _validateTaskHash($, task);
+
         require(
             $.allTaskResponses[task.taskId] == bytes32(0),
             "Aggregator has already responded to the task"
@@ -137,6 +195,20 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         );
 
         emit TaskResponded(taskResponse, taskResponseMetadata);
+    }
+
+    function _validateTaskHash(TaskManagerStorage storage $, ZrServiceManagerLib.Task calldata task) internal view {
+        bytes32 receivedHash = keccak256(abi.encode(task));
+        bytes32 expectedHash = $.allTaskHashes[task.taskId];
+        require(
+            receivedHash == expectedHash,
+            string(abi.encodePacked(
+                "Task hash mismatch. Expected: ",
+                toHexString(expectedHash),
+                ", Received: ",
+                toHexString(receivedHash)
+            ))
+        );
     }
 
     function raiseAndResolveChallenge(
