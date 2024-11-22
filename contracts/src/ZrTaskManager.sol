@@ -9,7 +9,7 @@ import {Initializable} from "../lib/openzeppelin-contracts-upgradeable/contracts
 import {OwnableUpgradeable} from "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "./interfaces/IZrServiceManager.sol";
 
-contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
+contract ZrTaskManager is Initializable, OwnableUpgradeable, BLSSignatureChecker {
     using BN254 for BN254.G1Point;
 
     uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 10000;
@@ -31,23 +31,26 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         0x9e5d0bf83ef884a66a66b2d439fd65f5546f8f4489c6a744f987ecb90e5d7100;
 
     constructor(
+        IRegistryCoordinator _registryCoordinator
+    ) BLSSignatureChecker(_registryCoordinator) {}
+
+    function initialize(
+        address initialOwner,
         address _aggregator,
         address _generator,
-        IRegistryCoordinator _registryCoordinator,
-        uint32 _taskResponseWindowBlock,
-        address initialOwner,
-        IZrServiceManager _zrServiceManager
-    ) BLSSignatureChecker(_registryCoordinator) {
-        // Initialize OwnableUpgradeable
+        IZrServiceManager _zrServiceManager,
+        uint32 _taskResponseWindowBlock
+    ) public initializer {
+        __Ownable_init(); // Initialize OwnableUpgradeable
         _transferOwnership(initialOwner);
 
         TaskManagerStorage storage $ = _getTaskManagerStorage();
+        $.TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
         $.aggregator = _aggregator;
         $.generator = _generator;
-        $.TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
         $.zrServiceManager = _zrServiceManager;
     }
-
+    
     function _getTaskManagerStorage() private pure returns (TaskManagerStorage storage $) {
         assembly {
             $.slot := TASK_MANAGER_STORAGE_LOCATION
