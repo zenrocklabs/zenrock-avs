@@ -274,14 +274,23 @@ contract IncredibleSquaringDeployer is Script, Utils {
             );
         }
 
-        // Deploy TaskManager
-        incredibleSquaringTaskManager = new ZrTaskManager(
-            AGGREGATOR_ADDR,
-            TASK_GENERATOR_ADDR,
+        ZrTaskManager incredibleSquaringTaskManagerImplementation = new ZrTaskManager(
             IRegistryCoordinator(address(registryCoordinator)),
-            TASK_RESPONSE_WINDOW_BLOCK,
-            msg.sender, // or your desired owner address
-            IZrServiceManager(address(incredibleSquaringServiceManager))
+            TASK_RESPONSE_WINDOW_BLOCK
+        );
+
+        // Upgrade and initialize the TaskManager proxy
+        incredibleSquaringProxyAdmin.upgradeAndCall(
+            TransparentUpgradeableProxy(payable(address(incredibleSquaringTaskManager))),
+            address(incredibleSquaringTaskManagerImplementation),
+            abi.encodeWithSelector(
+                ZrTaskManager.initialize.selector,
+                incredibleSquaringPauserReg,
+                msg.sender, // or incredibleSquaringCommunityMultisig
+                AGGREGATOR_ADDR,
+                TASK_GENERATOR_ADDR,
+                IZrServiceManager(address(incredibleSquaringServiceManager))
+            )
         );
 
         // Deploy ServiceManager implementation
@@ -311,7 +320,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
         vm.serializeAddress(deployed_addresses, "credibleSquaringServiceManager", address(incredibleSquaringServiceManager));
         vm.serializeAddress(deployed_addresses, "credibleSquaringServiceManagerImplementation", address(incredibleSquaringServiceManagerImplementation));
         vm.serializeAddress(deployed_addresses, "credibleSquaringTaskManager", address(incredibleSquaringTaskManager));
-        // vm.serializeAddress(deployed_addresses, "credibleSquaringTaskManagerImplementation", address(incredibleSquaringTaskManagerImplementation));
+        vm.serializeAddress(deployed_addresses, "credibleSquaringTaskManagerImplementation", address(incredibleSquaringTaskManagerImplementation));
         vm.serializeAddress(deployed_addresses, "registryCoordinator", address(registryCoordinator));
         vm.serializeAddress(deployed_addresses, "registryCoordinatorImplementation", address(registryCoordinatorImplementation));
         vm.serializeAddress(deployed_addresses, "stakeRegistry", address(stakeRegistry));

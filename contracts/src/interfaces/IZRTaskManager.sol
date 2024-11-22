@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.21;
 
-import "../../lib/eigenlayer-middleware/src/libraries/BN254.sol";
+import "@eigenlayer-middleware/src/libraries/BN254.sol";
 
 interface IZRTaskManager {
     // EVENTS
@@ -23,8 +23,6 @@ interface IZRTaskManager {
         uint32 indexed taskId,
         address indexed challenger
     );
-    
-    event ValidatorAddressesStored(uint32 indexed taskId, string[] addresses);
 
     // STRUCTS
     struct Task {
