@@ -8,62 +8,73 @@ import "./libraries/ZrServiceManagerLib.sol";
 import {Initializable} from "../lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "../lib/openzeppelin-contracts-upgradeable/contracts/access/OwnableUpgradeable.sol";
 import "./interfaces/IZrServiceManager.sol";
+import "@eigenlayer/contracts/permissions/Pausable.sol";
+import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
+import {IZRTaskManager} from "./interfaces/IZRTaskManager.sol";
 
-contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
+contract ZRTaskManager is
+    Initializable,
+    OwnableUpgradeable,
+    Pausable,
+    BLSSignatureChecker,
+    OperatorStateRetriever,
+    IZRTaskManager
+{
     using BN254 for BN254.G1Point;
 
+    /* CONSTANT */
+    uint32 public immutable TASK_RESPONSE_WINDOW_BLOCK;
     uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 10000;
-    uint256 internal constant _THRESHOLD_DENOMINATOR = 67;
+    uint256 internal constant _THRESHOLD_DENOMINATOR = 100;
 
-    // Storage structure
-    struct TaskManagerStorage {
-        uint32 TASK_RESPONSE_WINDOW_BLOCK;
-        uint32 latestTaskId;
-        mapping(uint32 => bytes32) allTaskHashes;
-        mapping(uint32 => bytes32) allTaskResponses;
-        mapping(uint32 => bool) taskSuccesfullyChallenged;
-        address aggregator;
-        address generator;
-        IZrServiceManager zrServiceManager;
-    }
+    /* STORAGE */
+    uint32 public latestTaskId;
 
-    bytes32 private constant TASK_MANAGER_STORAGE_LOCATION =
-        0x9e5d0bf83ef884a66a66b2d439fd65f5546f8f4489c6a744f987ecb90e5d7100;
+    // mapping of task indices to all tasks hashes
+    // when a task is created, task hash is stored here,
+    // and responses need to pass the actual task,
+    // which is hashed onchain and checked against this mapping
+    mapping(uint32 => bytes32) public allTaskHashes;
 
-    constructor(
-        address _aggregator,
-        address _generator,
-        IRegistryCoordinator _registryCoordinator,
-        uint32 _taskResponseWindowBlock,
-        address initialOwner,
-        IZrServiceManager _zrServiceManager
-    ) BLSSignatureChecker(_registryCoordinator) {
-        // Initialize OwnableUpgradeable
-        _transferOwnership(initialOwner);
+    // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
+    mapping(uint32 => bytes32) public allTaskResponses;
 
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        $.aggregator = _aggregator;
-        $.generator = _generator;
-        $.TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
-        $.zrServiceManager = _zrServiceManager;
-    }
+    mapping(uint32 => bool) public taskSuccesfullyChallenged;
 
-    function _getTaskManagerStorage() private pure returns (TaskManagerStorage storage $) {
-        assembly {
-            $.slot := TASK_MANAGER_STORAGE_LOCATION
-        }
-    }
+    address public aggregator;
+    address public generator;
+
+    IZrServiceManager public zrServiceManager;
 
     modifier onlyAggregator() {
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        require(msg.sender == $.aggregator, "Aggregator must be the caller");
+        require(msg.sender == aggregator, "Aggregator must be the caller");
         _;
     }
 
     modifier onlyTaskGenerator() {
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        require(msg.sender == $.generator, "Task generator must be the caller");
+        require(msg.sender == generator, "Task generator must be the caller");
         _;
+    }
+
+    constructor(
+        IRegistryCoordinator _registryCoordinator,
+        uint32 _taskResponseWindowBlock
+    ) BLSSignatureChecker(_registryCoordinator) {
+        TASK_RESPONSE_WINDOW_BLOCK = _taskResponseWindowBlock;
+    }
+
+    function initialize(
+        IPauserRegistry _pauserRegistry,
+        address initialOwner,
+        address _aggregator,
+        address _generator,
+        IZrServiceManager _zrServiceManager
+    ) public initializer {
+        _initializePauser(_pauserRegistry, UNPAUSE_ALL);
+        _transferOwnership(initialOwner);
+        aggregator = _aggregator;
+        generator = _generator;
+        zrServiceManager = _zrServiceManager;
     }
 
     function createNewTask(
@@ -71,38 +82,36 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
-        ZrServiceManagerLib.Task memory newTask;
+        Task memory newTask;
         newTask.taskId = taskId;
         newTask.taskCreatedBlock = uint32(block.number);
         newTask.quorumThresholdPercentage = quorumThresholdPercentage;
         newTask.quorumNumbers = quorumNumbers;
         
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        $.allTaskHashes[taskId] = keccak256(abi.encode(newTask));
+        allTaskHashes[taskId] = keccak256(abi.encode(newTask));
         emit NewTaskCreated(taskId, newTask);
-        $.latestTaskId = taskId;
+        latestTaskId = taskId;
     }
 
     function respondToTask(
-        ZrServiceManagerLib.Task calldata task,
-        ZrServiceManagerLib.TaskResponse calldata taskResponse,
+        Task calldata task,
+        TaskResponse calldata taskResponse,
         NonSignerStakesAndSignature memory nonSignerStakesAndSignature
     ) external onlyAggregator {
         uint32 taskCreatedBlock = task.taskCreatedBlock;
         bytes calldata quorumNumbers = task.quorumNumbers;
         uint32 quorumThresholdPercentage = task.quorumThresholdPercentage;
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
 
         require(
-            keccak256(abi.encode(task)) == $.allTaskHashes[task.taskId],
+            keccak256(abi.encode(task)) == allTaskHashes[task.taskId],
             "Supplied task does not match the one recorded in the contract"
         );
         require(
-            $.allTaskResponses[task.taskId] == bytes32(0),
+            allTaskResponses[task.taskId] == bytes32(0),
             "Aggregator has already responded to the task"
         );
         require(
-            uint32(block.number) <= taskCreatedBlock + $.TASK_RESPONSE_WINDOW_BLOCK,
+            uint32(block.number) <= taskCreatedBlock + TASK_RESPONSE_WINDOW_BLOCK,
             "Aggregator has responded to the task too late"
         );
 
@@ -127,12 +136,11 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         }
 
         if (taskResponse.inactiveSetZRChain.length > 0) {
-            $.zrServiceManager.ejectValidators(taskResponse.inactiveSetZRChain);
+            zrServiceManager.ejectValidators(taskResponse.inactiveSetZRChain);
         }
 
-        ZrServiceManagerLib.TaskResponseMetadata memory taskResponseMetadata = ZrServiceManagerLib
-            .TaskResponseMetadata(uint32(block.number), hashOfNonSigners);
-        $.allTaskResponses[task.taskId] = keccak256(
+        TaskResponseMetadata memory taskResponseMetadata = TaskResponseMetadata(uint32(block.number), hashOfNonSigners);
+        allTaskResponses[task.taskId] = keccak256(
             abi.encode(taskResponse, taskResponseMetadata)
         );
 
@@ -146,19 +154,18 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
         BN254.G1Point[] memory pubkeysOfNonSigningOperators
     ) external {
         uint32 referenceTaskId = taskResponse.referenceTaskId;
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-
+        
         require(
-            $.allTaskResponses[referenceTaskId] != bytes32(0),
+            allTaskResponses[referenceTaskId] != bytes32(0),
             "Task hasn't been responded to yet"
         );
         require(
-            $.allTaskResponses[referenceTaskId] ==
+            allTaskResponses[referenceTaskId] ==
                 keccak256(abi.encode(taskResponse, taskResponseMetadata)),
             "Task response does not match the one recorded in the contract"
         );
         require(
-            !$.taskSuccesfullyChallenged[referenceTaskId],
+            !taskSuccesfullyChallenged[referenceTaskId],
             "The response to this task has already been challenged successfully."
         );
         require(
@@ -191,27 +198,21 @@ contract ZrTaskManager is OwnableUpgradeable, BLSSignatureChecker {
             "The pubkeys of non-signing operators supplied by the challenger are not correct."
         );
 
-        $.taskSuccesfullyChallenged[referenceTaskId] = true;
+        taskSuccesfullyChallenged[referenceTaskId] = true;
 
         emit TaskChallengedSuccessfully(referenceTaskId, msg.sender);
     }
 
     function getTaskNumber() external view returns (uint32) {
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        return $.latestTaskId;
+        return latestTaskId;
     }
 
     function getTaskResponseWindowBlock() external view returns (uint32) {
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        return $.TASK_RESPONSE_WINDOW_BLOCK;
+        return TASK_RESPONSE_WINDOW_BLOCK;
     }
 
     function getTaskResponse(uint32 taskId) external view returns (bytes32) {
-        TaskManagerStorage storage $ = _getTaskManagerStorage();
-        return $.allTaskResponses[taskId];
+        return allTaskResponses[taskId];
     }
 
-    event NewTaskCreated(uint32 indexed taskId, ZrServiceManagerLib.Task task);
-    event TaskResponded(ZrServiceManagerLib.TaskResponse response, ZrServiceManagerLib.TaskResponseMetadata metadata);
-    event TaskChallengedSuccessfully(uint32 indexed taskId, address challenger);
 }
