@@ -74,10 +74,6 @@ start-aggregator: ##
 		--ecdsa-private-key ${AGGREGATOR_ECDSA_PRIV_KEY} \
 		2>&1 | zap-pretty
 
-start-operator: ## 
-	go run operator/cmd/main.go --config config-files/operator.anvil.yaml \
-		2>&1 | zap-pretty
-
 start-challenger: ## 
 	go run challenger/cmd/main.go --config config-files/challenger.yaml \
 		--credible-squaring-deployment ${DEPLOYMENT_FILES_DIR}/credible_squaring_avs_deployment_output.json \
