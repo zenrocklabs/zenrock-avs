@@ -1,0 +1,15 @@
+{
+  "addresses": {
+    "credibleSquaringServiceManager": "0x4ca852BD78D9B7295874A7D223023Bff011b7EB3",
+    "credibleSquaringServiceManagerImplementation": "0xd62d150E80DFc968d6E2B4AB891C463A1A70174a",
+    "credibleSquaringTaskManager": "0x3843D6738F12eeF52fD252e58a96214Fb37641a1",
+    "credibleSquaringTaskManagerImplementation": "0xcD96978E1CDf4e4996b9d694DcEb265D967B486f",
+    "operatorStateRetriever": "0x03d0452e70711f169eB6B6F5Ab33d8571c313ef6",
+    "registryCoordinator": "0xFbFECE8f29f499c32206d8bFfA57da2b124790C7",
+    "registryCoordinatorImplementation": "0xb14B3c2e4a99D335E1C2C2f47589A24655Dff73E",
+    "socketRegistry": "0x767d67188BD38228dC3Ce53EeBb1b2b5A324Eaf6",
+    "socketRegistryImplementation": "0x408b7dc32c1177025F387c6BC92eB8E724a2d3f3",
+    "stakeRegistry": "0x68BD5a90EEcF77E96d93cf593d5e7b361793c8E2",
+    "stakeRegistryImplementation": "0xA1B72D2829F2Ce7eDC4B555958c8D13d463B170c"
+  }
+}

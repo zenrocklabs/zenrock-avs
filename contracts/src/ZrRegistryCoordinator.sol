@@ -78,26 +78,22 @@ contract ZrRegistryCoordinator is
      * @param _ejector will hold the ejector role, which can force-eject operators from quorums
      * @param _pauserRegistry a registry of addresses that can pause the contract
      * @param _initialPausedStatus pause status after calling initialize
-     * Config for initial quorums (see `createQuorum`):
-     * @param _operatorSetParams max operator count and operator churn parameters
-     * @param _minimumStakes minimum stake weight to allow an operator to register
-     * @param _strategyParams which Strategies/multipliers a quorum considers when calculating stake weight
      */
     function initialize(
         address _initialOwner,
         address _churnApprover,
         address _ejector,
         IPauserRegistry _pauserRegistry,
-        uint256 _initialPausedStatus,
-        OperatorSetParam[] memory _operatorSetParams,
-        uint96[] memory _minimumStakes,
-        IStakeRegistry.StrategyParams[][] memory _strategyParams
+        uint256 _initialPausedStatus
+        // OperatorSetParam[] memory _operatorSetParams,
+        // uint96[] memory _minimumStakes,
+        // IStakeRegistry.StrategyParams[][] memory _strategyParams
     ) external initializer {
-        require(
-            _operatorSetParams.length == _minimumStakes.length &&
-                _minimumStakes.length == _strategyParams.length,
-            "RegCoord.initialize: input length mismatch"
-        );
+        // require(
+            // _operatorSetParams.length == _minimumStakes.length &&
+            // _minimumStakes.length == _strategyParams.length,
+            // "RegCoord.initialize: input length mismatch"
+        // );
 
         // Initialize roles
         _transferOwnership(_initialOwner);
@@ -111,13 +107,13 @@ contract ZrRegistryCoordinator is
         registries.push(address(indexRegistry));
 
         // Create quorums
-        for (uint256 i = 0; i < _operatorSetParams.length; i++) {
-            _createQuorum(
-                _operatorSetParams[i],
-                _minimumStakes[i],
-                _strategyParams[i]
-            );
-        }
+        // for (uint256 i = 0; i < _operatorSetParams.length; i++) {
+        //     _createQuorum(
+        //         _operatorSetParams[i],
+        //         _minimumStakes[i],
+        //         _strategyParams[i]
+        //     );
+        // }
     }
 
     /*******************************************************************************

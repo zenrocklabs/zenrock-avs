@@ -44,8 +44,9 @@ contract IncredibleSquaringDeployer is Script, Utils {
     uint32 public constant TASK_RESPONSE_WINDOW_BLOCK = 300;
     uint32 public constant TASK_CHALLENGE_WINDOW_BLOCK = 0;
     
-    address public constant AGGREGATOR_ADDR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
-    address public constant TASK_GENERATOR_ADDR = 0x52CD7Cb69053c1F00360B8917809E601b78498Fc;
+    address public constant AGGREGATOR_ADDR = 0xde5854CF120b96856A770963b47c017D0CF4c201;
+    address public constant TASK_GENERATOR_ADDR = 0xde5854CF120b96856A770963b47c017D0CF4c201;
+    address public constant REWARDS_COORDINATOR_ADDR = 0x7750d328b314EfFa365A0402CcfD489B80B0adda;
 
     // Contract instances
     ProxyAdmin public incredibleSquaringProxyAdmin;
@@ -78,7 +79,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
         string memory eigenlayerDeployedContracts = readOutput("eigenlayer_deployment_output");
         
         IDelegationManager delegationManager = IDelegationManager(
-            stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.delegation")
+            stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.delegationManager")
         );
         IAVSDirectory avsDirectory = IAVSDirectory(
             stdJson.readAddress(eigenlayerDeployedContracts, ".addresses.avsDirectory")
@@ -90,12 +91,12 @@ contract IncredibleSquaringDeployer is Script, Utils {
         vm.startBroadcast();
         
         // Use existing WETH strategy
-        StrategyBase wethStrat = StrategyBase(0xFb83e1D133D0157775eC4F19Ff81478Df1103305);
+        // StrategyBase wethStrat = StrategyBase(0xFb83e1D133D0157775eC4F19Ff81478Df1103305);
         
         _deployIncredibleSquaringContracts(
             delegationManager,
             avsDirectory,
-            wethStrat,
+            // wethStrat,
             incredibleSquaringCommunityMultisig,
             incredibleSquaringPauser
         );
@@ -106,13 +107,13 @@ contract IncredibleSquaringDeployer is Script, Utils {
     function _deployIncredibleSquaringContracts(
         IDelegationManager delegationManager,
         IAVSDirectory avsDirectory,
-        IStrategy strat,
+        // IStrategy strat,
         address incredibleSquaringCommunityMultisig,
         address incredibleSquaringPauser
     ) internal {
         // Setup single strategy array
-        IStrategy[1] memory deployedStrategyArray = [strat];
-        uint numStrategies = deployedStrategyArray.length;
+        // IStrategy[1] memory deployedStrategyArray = [strat];
+        // uint numStrategies = deployedStrategyArray.length;
 
         // Deploy proxy admin
         incredibleSquaringProxyAdmin = new ProxyAdmin();
@@ -238,24 +239,24 @@ contract IncredibleSquaringDeployer is Script, Utils {
             
             for (uint i = 0; i < numQuorums; i++) {
                 quorumsOperatorSetParams[i] = IRegistryCoordinator.OperatorSetParam({
-                    maxOperatorCount: 75,
+                    maxOperatorCount: 64,
                     kickBIPsOfOperatorStake: 15000,
                     kickBIPsOfTotalStake: 100
                 });
             }
 
-            uint96[] memory quorumsMinimumStake = new uint96[](numQuorums);
-            IStakeRegistry.StrategyParams[][] memory quorumsStrategyParams = new IStakeRegistry.StrategyParams[][](numQuorums);
+            // uint96[] memory quorumsMinimumStake = new uint96[](numQuorums);
+            // IStakeRegistry.StrategyParams[][] memory quorumsStrategyParams = new IStakeRegistry.StrategyParams[][](numQuorums);
             
-            for (uint i = 0; i < numQuorums; i++) {
-                quorumsStrategyParams[i] = new IStakeRegistry.StrategyParams[](numStrategies);
-                for (uint j = 0; j < numStrategies; j++) {
-                    quorumsStrategyParams[i][j] = IStakeRegistry.StrategyParams({
-                        strategy: deployedStrategyArray[j],
-                        multiplier: 1 ether
-                    });
-                }
-            }
+            // for (uint i = 0; i < numQuorums; i++) {
+            //     quorumsStrategyParams[i] = new IStakeRegistry.StrategyParams[](numStrategies);
+            //     for (uint j = 0; j < numStrategies; j++) {
+            //         quorumsStrategyParams[i][j] = IStakeRegistry.StrategyParams({
+            //             strategy: deployedStrategyArray[j],
+            //             multiplier: 1 ether
+            //         });
+            //     }
+            // }
 
             incredibleSquaringProxyAdmin.upgradeAndCall(
                 TransparentUpgradeableProxy(payable(address(registryCoordinator))),
@@ -264,12 +265,9 @@ contract IncredibleSquaringDeployer is Script, Utils {
                     ZrRegistryCoordinator.initialize.selector,
                     incredibleSquaringCommunityMultisig,
                     incredibleSquaringCommunityMultisig,
-                    incredibleSquaringCommunityMultisig,
+                    incredibleSquaringServiceManager,
                     incredibleSquaringPauserReg,
-                    0,
-                    quorumsOperatorSetParams,
-                    quorumsMinimumStake,
-                    quorumsStrategyParams
+                    0
                 )
             );
         }
@@ -296,7 +294,7 @@ contract IncredibleSquaringDeployer is Script, Utils {
         // Deploy ServiceManager implementation
         incredibleSquaringServiceManagerImplementation = new ZrServiceManager(
             avsDirectory,
-            IRewardsCoordinator(address(0x1A17df4170099577b79038Fd310f3ff62F79752E)),
+            IRewardsCoordinator(REWARDS_COORDINATOR_ADDR),
             ZrRegistryCoordinator(address(registryCoordinator)),
             IStakeRegistry(address(stakeRegistry))
         );
