@@ -5,7 +5,7 @@ go 1.23.2
 replace (
 	cosmossdk.io/core => cosmossdk.io/core v0.11.0
 	github.com/Layr-Labs/eigensdk-go => github.com/zenrocklabs/eigensdk-go v0.1.7-zenrock
-	// github.com/Zenrock-Foundation/zrchain/v5 => github.com/zenrocklabs/zrchain/v5 v5.3.5
+	// github.com/Zenrock-Foundation/zrchain/v5 => github.com/zenrocklabs/zrchain/v5 v5.5.1
 	github.com/Zenrock-Foundation/zrchain/v5 => ../zrchain
 	github.com/cosmos/iavl => github.com/cosmos/iavl v1.2.0
 	github.com/gogo/protobuf => github.com/gogo/protobuf v1.3.2
