@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
+	"sync/atomic"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -34,6 +36,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/nodeapi"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 )
 
 const AVS_NAME = "incredible-squaring"
@@ -68,13 +72,14 @@ type Operator struct {
 	// needed when opting in to avs (allow this service manager contract to slash operator)
 	credibleSquaringServiceManagerAddr common.Address
 	// zenrock chain client
-	zrChainClient *client.QueryClient
+	zrChainClient   *client.QueryClient
+	sidecarStatePtr *atomic.Value
 }
 
 // TODO(samlaf): config is a mess right now, since the chainio client constructors
 //
 //	take the config in core (which is shared with aggregator and challenger)
-func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
+func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*Operator, error) {
 	var logLevel logging.LogLevel
 	if c.Production {
 		logLevel = sdklogging.Production
@@ -239,6 +244,7 @@ func NewOperatorFromConfig(c types.NodeConfig) (*Operator, error) {
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
 		zrChainClient:                      zrChainClient,
+		sidecarStatePtr:                    sidecarStatePtr,
 	}
 
 	// operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
@@ -325,7 +331,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	pageReq := &query.PageRequest{}
 
 	for {
-		resp, err := o.zrChainClient.ValidationQueryClient.UnbondedValidators(context.Background(), pageReq)
+		resp, err := o.zrChainClient.ValidationQueryClient.BondedValidators(context.Background(), pageReq)
 		if err != nil {
 			o.logger.Error("Error getting unbonded validators", "err", err)
 		}
@@ -341,10 +347,24 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 		pageReq.Key = resp.Pagination.NextKey
 	}
 
+	sidecarState := o.sidecarStatePtr.Load().(*sidecartypes.OracleState)
+	delegatedValidators := make([]string, 0, len(sidecarState.EigenDelegations))
+	for k := range sidecarState.EigenDelegations {
+		delegatedValidators = append(delegatedValidators, k)
+	}
+
+	// Get subset of delegatedValidators that are not in validatorAddresses (bonded validators on zrChain)
+	validatorsToRemove := []string{}
+	for _, validator := range delegatedValidators {
+		if !slices.Contains(validatorAddresses, validator) {
+			validatorsToRemove = append(validatorsToRemove, validator)
+		}
+	}
+
 	// Create the TaskResponse with the new structure
 	taskResponse := &cstaskmanager.ZrServiceManagerLibTaskResponse{
 		ReferenceTaskId:    newTaskCreatedLog.Task.TaskId,
-		InactiveSetZRChain: validatorAddresses,
+		InactiveSetZRChain: validatorsToRemove,
 	}
 
 	return taskResponse
