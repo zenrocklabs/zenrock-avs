@@ -1,3 +1,10 @@
+## [1.4.12](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.11...v1.4.12) (2024-12-17)
+
+
+### Bug Fixes
+
+* send delegated validators not in active set for removal via tasks ([#6](https://github.com/zenrocklabs/zenrock-avs/issues/6)) ([bee5d1e](https://github.com/zenrocklabs/zenrock-avs/commit/bee5d1e480f38958975e11e256c6952fb10b12aa))
+
 ## [1.4.11](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.10...v1.4.11) (2024-11-22)
 
 
