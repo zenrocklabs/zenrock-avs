@@ -1,3 +1,10 @@
+## [1.4.13](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.12...v1.4.13) (2024-12-24)
+
+
+### Bug Fixes
+
+* bump `eigensdk-go` ver +`zrchain` ver ([d804ddf](https://github.com/zenrocklabs/zenrock-avs/commit/d804ddfa49365368ba0df25fb209f31d31d424f9))
+
 ## [1.4.12](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.11...v1.4.12) (2024-12-17)
 
 
