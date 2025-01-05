@@ -29,7 +29,7 @@ func DepositIntoStrategy(ctx *cli.Context) error {
 	}
 	log.Println("Config:", string(configJson))
 
-	operator, err := operator.NewOperatorFromConfig(nodeConfig)
+	operator, err := operator.NewOperatorFromConfig(nodeConfig, nil)
 	if err != nil {
 		return err
 	}
