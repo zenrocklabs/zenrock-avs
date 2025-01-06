@@ -1,3 +1,10 @@
+## [1.4.14](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.13...v1.4.14) (2025-01-06)
+
+
+### Bug Fixes
+
+* move registration code to CLI, don't require EL ECDSA key unless registering ([#7](https://github.com/zenrocklabs/zenrock-avs/issues/7)) ([ec71533](https://github.com/zenrocklabs/zenrock-avs/commit/ec715332f6cf53980bcc2a7b04d80f4dbcfec504))
+
 ## [1.4.13](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.12...v1.4.13) (2024-12-24)
 
 
