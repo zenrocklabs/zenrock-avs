@@ -322,7 +322,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	for {
 		resp, err := o.zrChainClient.ValidationQueryClient.BondedValidators(context.Background(), pageReq)
 		if err != nil {
-			o.logger.Error("Error getting unbonded validators", "err", err)
+			o.logger.Error("Error getting active validator set for zrChain", "err", err)
 		}
 
 		for _, validator := range resp.Validators {
