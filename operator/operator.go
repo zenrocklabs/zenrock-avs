@@ -3,6 +3,7 @@ package operator
 import (
 	"context"
 	"fmt"
+	"os"
 	"slices"
 	"sync/atomic"
 
@@ -115,15 +116,15 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		}
 	}
 
-	// blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	// if !ok {
-	// 	logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	// }
-	// blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
-	// if err != nil {
-	// 	logger.Errorf("Cannot parse bls private key", "err", err)
-	// 	return nil, err
-	// }
+	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
+	if !ok {
+		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+	}
+	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
+	if err != nil {
+		logger.Errorf("Cannot parse bls private key", "err", err)
+		return nil, err
+	}
 
 	// TODO(samlaf): should we add the chainId to the config instead?
 	// this way we can prevent creating a signer that signs on mainnet by mistake
@@ -232,7 +233,7 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		avsSubscriber: avsSubscriber,
 		// eigenlayerReader:                   sdkClients.ElChainReader,
 		// eigenlayerWriter:                   sdkClients.ElChainWriter,
-		// blsKeypair:                         blsKeyPair,
+		blsKeypair:                         blsKeyPair,
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
 		aggregatorRpcClient:                aggregatorRpcClient,
