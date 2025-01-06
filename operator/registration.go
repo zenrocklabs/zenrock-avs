@@ -20,10 +20,7 @@ import (
 	eigenSdkTypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
-func (o *Operator) registerOperatorOnStartup(
-	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
-	tokenStrategyAddr common.Address,
-) {
+func (o *Operator) registerOperatorOnStartup(operatorEcdsaPrivateKey *ecdsa.PrivateKey) {
 	if err := o.RegisterOperatorWithEigenlayer(); err != nil {
 		// This error might only be that the operator was already registered with eigenlayer, so we don't want to fatal
 		o.logger.Debug("Error registering operator with eigenlayer", "err", err)
@@ -31,52 +28,12 @@ func (o *Operator) registerOperatorOnStartup(
 		o.logger.Infof("Registered operator with eigenlayer")
 	}
 
-	// TODO: shouldn't hardcode value here
-	amount := big.NewInt(10000000000000000)
-	if err := o.DepositIntoStrategy(tokenStrategyAddr, amount); err != nil {
-		o.logger.Debug("Error depositing into strategy", "err", err)
-	} else {
-		o.logger.Infof("Deposited %s into strategy %s", amount, tokenStrategyAddr)
-	}
-
 	if err := o.RegisterOperatorWithAvs(operatorEcdsaPrivateKey); err != nil {
 		o.logger.Debug("Error registering operator with avs", "err", err)
 	} else {
 		o.logger.Infof("Registered operator with avs")
 	}
-
-	// if err := o.DelegateServiceManager(o.config.OperatorValidatorAddress, amount); err != nil {
-	// 	o.logger.Debug("Error delegating via service manager", "err", err)
-	// } else {
-	// 	o.logger.Infof("Delegated AVS tokens via ZRServiceManager contract")
-	// }
 }
-
-// func (o *Operator) DelegateServiceManager(validatorAddr string, amount *big.Int) error {
-// 	serviceManager, err := avs.NewContractZrServiceManager(common.HexToAddress(o.config.ServiceManagerAddress), o.ethClient)
-// 	if err != nil {
-// 		o.logger.Fatal("Error creating service manager contract interface", "err", err)
-// 		return err
-// 	}
-
-// 	txOpts, err := o.avsWriter.TxMgr.GetNoSendTxOpts()
-// 	if err != nil {
-// 		o.logger.Errorf("Error getting txOpts")
-// 		return err
-// 	}
-
-// 	tx, err := serviceManager.Delegate(txOpts, validatorAddr, amount)
-// 	if err != nil {
-// 		o.logger.Debug("Error creating Delegate tx")
-// 		return err
-// 	}
-
-// 	if _, err = o.avsWriter.TxMgr.Send(context.Background(), tx); err != nil {
-// 		return errors.New("failed to send tx with err: " + err.Error())
-// 	}
-
-// 	return nil
-// }
 
 func (o *Operator) RegisterOperatorWithEigenlayer() error {
 	op := eigenSdkTypes.Operator{

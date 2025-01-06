@@ -8,7 +8,6 @@ import (
 	"sync/atomic"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -21,26 +20,20 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
 	sdkmetrics "github.com/Layr-Labs/eigensdk-go/metrics"
-	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/nodeapi"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
 )
 
-const AVS_NAME = "incredible-squaring"
+const AVS_NAME = "zenrock-avs"
 const SEM_VER = "0.0.1"
 
 type Operator struct {
@@ -132,60 +125,64 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		logger.Errorf("Cannot parse bls private key", "err", err)
 		return nil, err
 	}
+
 	// TODO(samlaf): should we add the chainId to the config instead?
 	// this way we can prevent creating a signer that signs on mainnet by mistake
 	// if the config says chainId=5, then we can only create a goerli signer
-	chainId, err := ethRpcClient.ChainID(context.Background())
-	if err != nil {
-		logger.Error("Cannot get chainId", "err", err)
-		return nil, err
-	}
+	// chainId, err := ethRpcClient.ChainID(context.Background())
+	// if err != nil {
+	// 	logger.Error("Cannot get chainId", "err", err)
+	// 	return nil, err
+	// }
 
-	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
-	}
+	// ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+	// if !ok {
+	// 	logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+	// }
 
-	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
-		KeystorePath: c.EcdsaPrivateKeyStorePath,
-		Password:     ecdsaKeyPassword,
-	}, chainId)
-	if err != nil {
-		panic(err)
-	}
-	chainioConfig := clients.BuildAllConfig{
-		EthHttpUrl:                 c.EthRpcUrl,
-		EthWsUrl:                   c.EthWsUrl,
-		RegistryCoordinatorAddr:    c.AVSRegistryCoordinatorAddress,
-		OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress,
-		AvsName:                    AVS_NAME,
-		PromMetricsIpPortAddress:   c.EigenMetricsIpPortAddress,
-	}
-	operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
-		c.EcdsaPrivateKeyStorePath,
-		ecdsaKeyPassword,
-	)
-	if err != nil {
-		return nil, err
-	}
-	sdkClients, err := clients.BuildAll(chainioConfig, operatorEcdsaPrivateKey, logger)
-	if err != nil {
-		panic(err)
-	}
-	skWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, common.HexToAddress(c.OperatorAddress), logger)
-	if err != nil {
-		panic(err)
-	}
-	txMgr := txmgr.NewSimpleTxManager(skWallet, ethRpcClient, logger, common.HexToAddress(c.OperatorAddress))
+	// signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
+	// 	KeystorePath: c.EcdsaPrivateKeyStorePath,
+	// 	Password:     ecdsaKeyPassword,
+	// }, chainId)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	avsWriter, err := chainio.BuildAvsWriter(
-		txMgr, common.HexToAddress(c.AVSRegistryCoordinatorAddress),
-		common.HexToAddress(c.OperatorStateRetrieverAddress), ethRpcClient, logger,
-	)
-	if err != nil {
-		logger.Error("Cannot create AvsWriter", "err", err)
-		return nil, err
-	}
+	// chainioConfig := clients.BuildAllConfig{
+	// 	EthHttpUrl:                 c.EthRpcUrl,
+	// 	EthWsUrl:                   c.EthWsUrl,
+	// 	RegistryCoordinatorAddr:    c.AVSRegistryCoordinatorAddress,
+	// 	OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress,
+	// 	AvsName:                    AVS_NAME,
+	// 	PromMetricsIpPortAddress:   c.EigenMetricsIpPortAddress,
+	// }
+
+	// operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
+	// 	c.EcdsaPrivateKeyStorePath,
+	// 	ecdsaKeyPassword,
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// sdkClients, err := clients.BuildAll(chainioConfig, operatorEcdsaPrivateKey, logger)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// skWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, common.HexToAddress(c.OperatorAddress), logger)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// txMgr := txmgr.NewSimpleTxManager(skWallet, ethRpcClient, logger, common.HexToAddress(c.OperatorAddress))
+
+	// avsWriter, err := chainio.BuildAvsWriter(
+	// 	txMgr, common.HexToAddress(c.AVSRegistryCoordinatorAddress),
+	// 	common.HexToAddress(c.OperatorStateRetrieverAddress), ethRpcClient, logger,
+	// )
+	// if err != nil {
+	// 	logger.Error("Cannot create AvsWriter", "err", err)
+	// 	return nil, err
+	// }
 
 	avsReader, err := chainio.BuildAvsReader(
 		common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -205,13 +202,13 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 
 	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph calls)
 	// and not instrumented metrics: see https://prometheus.io/docs/instrumenting/writing_clientlibs/#overall-structure
-	quorumNames := map[sdktypes.QuorumNum]string{
-		0: "quorum0",
-	}
-	economicMetricsCollector := economic.NewCollector(
-		sdkClients.ElChainReader, sdkClients.AvsRegistryChainReader,
-		AVS_NAME, logger, common.HexToAddress(c.OperatorAddress), quorumNames)
-	reg.MustRegister(economicMetricsCollector)
+	// quorumNames := map[sdktypes.QuorumNum]string{
+	// 	0: "quorum0",
+	// }
+	// economicMetricsCollector := economic.NewCollector(
+	// 	sdkClients.ElChainReader, sdkClients.AvsRegistryChainReader,
+	// 	AVS_NAME, logger, common.HexToAddress(c.OperatorAddress), quorumNames)
+	// reg.MustRegister(economicMetricsCollector)
 
 	aggregatorRpcClient, err := NewAggregatorRpcClient(c.AggregatorServerIpPortAddress, logger, avsAndEigenMetrics)
 	if err != nil {
@@ -225,17 +222,17 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 	}
 
 	operator := &Operator{
-		config:                             c,
-		logger:                             logger,
-		metricsReg:                         reg,
-		metrics:                            avsAndEigenMetrics,
-		nodeApi:                            nodeApi,
-		ethClient:                          ethRpcClient,
-		avsWriter:                          avsWriter,
-		avsReader:                          avsReader,
-		avsSubscriber:                      avsSubscriber,
-		eigenlayerReader:                   sdkClients.ElChainReader,
-		eigenlayerWriter:                   sdkClients.ElChainWriter,
+		config:     c,
+		logger:     logger,
+		metricsReg: reg,
+		metrics:    avsAndEigenMetrics,
+		nodeApi:    nodeApi,
+		ethClient:  ethRpcClient,
+		// avsWriter:                          avsWriter,
+		avsReader:     avsReader,
+		avsSubscriber: avsSubscriber,
+		// eigenlayerReader:                   sdkClients.ElChainReader,
+		// eigenlayerWriter:                   sdkClients.ElChainWriter,
 		blsKeypair:                         blsKeyPair,
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
@@ -247,29 +244,21 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		sidecarStatePtr:                    sidecarStatePtr,
 	}
 
-	// operatorIsRegistered, err := operator.avsReader.IsOperatorRegistered(&bind.CallOpts{}, operator.operatorAddr)
-	// if err != nil {
-	// 	logger.Error("Error checking if operator is registered", "err", err)
-	// 	return nil, err
-	// }
-	// if !operatorIsRegistered {
-	// logger.Info("Operator is not registered. Registering operator...")
-	operator.registerOperatorOnStartup(operatorEcdsaPrivateKey, common.HexToAddress(c.TokenStrategyAddr))
-	// }
+	// operator.registerOperatorOnStartup(operatorEcdsaPrivateKey)
 
 	// OperatorId is set in contract during registration so we get it after registering operator.
-	operatorId, err := sdkClients.AvsRegistryChainReader.GetOperatorId(&bind.CallOpts{}, operator.operatorAddr)
-	if err != nil {
-		logger.Error("Cannot get operator id", "err", err)
-		return nil, err
-	}
-	operator.operatorId = operatorId
-	logger.Info("Operator info",
-		"operatorId", operatorId,
-		"operatorAddr", c.OperatorAddress,
-		"operatorG1Pubkey", operator.blsKeypair.GetPubKeyG1(),
-		"operatorG2Pubkey", operator.blsKeypair.GetPubKeyG2(),
-	)
+	// operatorId, err := sdkClients.AvsRegistryChainReader.GetOperatorId(&bind.CallOpts{}, operator.operatorAddr)
+	// if err != nil {
+	// 	logger.Error("Cannot get operator id", "err", err)
+	// 	return nil, err
+	// }
+	// operator.operatorId = operatorId
+	// logger.Info("Operator info",
+	// 	"operatorId", operatorId,
+	// 	"operatorAddr", c.OperatorAddress,
+	// 	"operatorG1Pubkey", operator.blsKeypair.GetPubKeyG1(),
+	// 	"operatorG2Pubkey", operator.blsKeypair.GetPubKeyG2(),
+	// )
 
 	return operator, nil
 
@@ -333,7 +322,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	for {
 		resp, err := o.zrChainClient.ValidationQueryClient.BondedValidators(context.Background(), pageReq)
 		if err != nil {
-			o.logger.Error("Error getting unbonded validators", "err", err)
+			o.logger.Error("Error getting active validator set for zrChain", "err", err)
 		}
 
 		for _, validator := range resp.Validators {
