@@ -1,3 +1,10 @@
+## [1.4.15](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.14...v1.4.15) (2025-01-23)
+
+
+### Bug Fixes
+
+* registration CLI ([fe2f555](https://github.com/zenrocklabs/zenrock-avs/commit/fe2f555d2f8de0467984f497406bed33e206dcf4))
+
 ## [1.4.14](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.13...v1.4.14) (2025-01-06)
 
 
