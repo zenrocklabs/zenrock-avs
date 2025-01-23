@@ -16,7 +16,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/zenrocklabs/zenrock-avs/core"
 
+	contractRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	eigenSdkTypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -88,6 +90,22 @@ func (o *Operator) RegisterOperatorWithAvs(
 		return err
 	}
 	o.logger.Infof("Registered operator with avs registry coordinator.")
+
+	return nil
+}
+
+func (o *Operator) DeregisterOperatorWithAvs() error {
+	quorumNumbers := eigenSdkTypes.QuorumNums{eigenSdkTypes.QuorumNum(0)}
+	_, err := o.avsWriter.DeregisterOperator(
+		context.Background(),
+		quorumNumbers,
+		contractRegistryCoordinator.BN254G1Point(core.ConvertToBN254G1Point(o.blsKeypair.GetPubKeyG1())),
+	)
+	if err != nil {
+		o.logger.Debug("Unable to deregister operator with avs registry coordinator")
+		return err
+	}
+	o.logger.Infof("Deregistered operator with avs registry coordinator.")
 
 	return nil
 }
