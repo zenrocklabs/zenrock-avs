@@ -45,8 +45,11 @@ func RegisterOperatorWithAvs(ctx *cli.Context) error {
 		return err
 	}
 
-	err = operator.RegisterOperatorWithAvs(operatorEcdsaPrivKey)
-	if err != nil {
+	if err = operator.RegistrationSetup(); err != nil {
+		return err
+	}
+
+	if err = operator.RegisterOperatorWithAvs(operatorEcdsaPrivKey); err != nil {
 		return err
 	}
 

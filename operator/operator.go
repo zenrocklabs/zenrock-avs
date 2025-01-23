@@ -20,14 +20,19 @@ import (
 
 	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
 	sdkmetrics "github.com/Layr-Labs/eigensdk-go/metrics"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/nodeapi"
+	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
@@ -126,64 +131,6 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		return nil, err
 	}
 
-	// TODO(samlaf): should we add the chainId to the config instead?
-	// this way we can prevent creating a signer that signs on mainnet by mistake
-	// if the config says chainId=5, then we can only create a goerli signer
-	// chainId, err := ethRpcClient.ChainID(context.Background())
-	// if err != nil {
-	// 	logger.Error("Cannot get chainId", "err", err)
-	// 	return nil, err
-	// }
-
-	// ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
-	// if !ok {
-	// 	logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
-	// }
-
-	// signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
-	// 	KeystorePath: c.EcdsaPrivateKeyStorePath,
-	// 	Password:     ecdsaKeyPassword,
-	// }, chainId)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// chainioConfig := clients.BuildAllConfig{
-	// 	EthHttpUrl:                 c.EthRpcUrl,
-	// 	EthWsUrl:                   c.EthWsUrl,
-	// 	RegistryCoordinatorAddr:    c.AVSRegistryCoordinatorAddress,
-	// 	OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress,
-	// 	AvsName:                    AVS_NAME,
-	// 	PromMetricsIpPortAddress:   c.EigenMetricsIpPortAddress,
-	// }
-
-	// operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
-	// 	c.EcdsaPrivateKeyStorePath,
-	// 	ecdsaKeyPassword,
-	// )
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// sdkClients, err := clients.BuildAll(chainioConfig, operatorEcdsaPrivateKey, logger)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// skWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, common.HexToAddress(c.OperatorAddress), logger)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// txMgr := txmgr.NewSimpleTxManager(skWallet, ethRpcClient, logger, common.HexToAddress(c.OperatorAddress))
-
-	// avsWriter, err := chainio.BuildAvsWriter(
-	// 	txMgr, common.HexToAddress(c.AVSRegistryCoordinatorAddress),
-	// 	common.HexToAddress(c.OperatorStateRetrieverAddress), ethRpcClient, logger,
-	// )
-	// if err != nil {
-	// 	logger.Error("Cannot create AvsWriter", "err", err)
-	// 	return nil, err
-	// }
-
 	avsReader, err := chainio.BuildAvsReader(
 		common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		common.HexToAddress(c.OperatorStateRetrieverAddress),
@@ -222,17 +169,14 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 	}
 
 	operator := &Operator{
-		config:     c,
-		logger:     logger,
-		metricsReg: reg,
-		metrics:    avsAndEigenMetrics,
-		nodeApi:    nodeApi,
-		ethClient:  ethRpcClient,
-		// avsWriter:                          avsWriter,
-		avsReader:     avsReader,
-		avsSubscriber: avsSubscriber,
-		// eigenlayerReader:                   sdkClients.ElChainReader,
-		// eigenlayerWriter:                   sdkClients.ElChainWriter,
+		config:                             c,
+		logger:                             logger,
+		metricsReg:                         reg,
+		metrics:                            avsAndEigenMetrics,
+		nodeApi:                            nodeApi,
+		ethClient:                          ethRpcClient,
+		avsReader:                          avsReader,
+		avsSubscriber:                      avsSubscriber,
 		blsKeypair:                         blsKeyPair,
 		operatorAddr:                       common.HexToAddress(c.OperatorAddress),
 		aggregatorServerIpPortAddr:         c.AggregatorServerIpPortAddress,
@@ -244,7 +188,77 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		sidecarStatePtr:                    sidecarStatePtr,
 	}
 
-	// operator.registerOperatorOnStartup(operatorEcdsaPrivateKey)
+	return operator, nil
+}
+
+func (o *Operator) RegistrationSetup() error {
+	ethRpcClient, err := eth.NewClient(o.config.EthRpcUrl)
+	if err != nil {
+		o.logger.Errorf("Cannot create http ethclient", "err", err)
+		return err
+	}
+
+	// TODO(samlaf): should we add the chainId to the config instead?
+	// this way we can prevent creating a signer that signs on mainnet by mistake
+	// if the config says chainId=5, then we can only create a goerli signer
+	chainId, err := ethRpcClient.ChainID(context.Background())
+	if err != nil {
+		o.logger.Error("Cannot get chainId", "err", err)
+		return err
+	}
+
+	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+	if !ok {
+		o.logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+	}
+
+	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
+		KeystorePath: o.config.EcdsaPrivateKeyStorePath,
+		Password:     ecdsaKeyPassword,
+	}, chainId)
+	if err != nil {
+		return err
+	}
+
+	chainioConfig := clients.BuildAllConfig{
+		EthHttpUrl:                 o.config.EthRpcUrl,
+		EthWsUrl:                   o.config.EthWsUrl,
+		RegistryCoordinatorAddr:    o.config.AVSRegistryCoordinatorAddress,
+		OperatorStateRetrieverAddr: o.config.OperatorStateRetrieverAddress,
+		AvsName:                    AVS_NAME,
+		PromMetricsIpPortAddress:   o.config.EigenMetricsIpPortAddress,
+	}
+
+	operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
+		o.config.EcdsaPrivateKeyStorePath,
+		ecdsaKeyPassword,
+	)
+	if err != nil {
+		return err
+	}
+
+	sdkClients, err := clients.BuildAll(chainioConfig, operatorEcdsaPrivateKey, o.logger)
+	if err != nil {
+		return err
+	}
+	skWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, common.HexToAddress(o.config.OperatorAddress), o.logger)
+	if err != nil {
+		return err
+	}
+	txMgr := txmgr.NewSimpleTxManager(skWallet, ethRpcClient, o.logger, common.HexToAddress(o.config.OperatorAddress))
+
+	avsWriter, err := chainio.BuildAvsWriter(
+		txMgr, common.HexToAddress(o.config.AVSRegistryCoordinatorAddress),
+		common.HexToAddress(o.config.OperatorStateRetrieverAddress), ethRpcClient, o.logger,
+	)
+	if err != nil {
+		o.logger.Error("Cannot create AvsWriter", "err", err)
+		return err
+	}
+
+	o.avsWriter = avsWriter
+	o.eigenlayerReader = sdkClients.ElChainReader
+	o.eigenlayerWriter = sdkClients.ElChainWriter
 
 	// OperatorId is set in contract during registration so we get it after registering operator.
 	// operatorId, err := sdkClients.AvsRegistryChainReader.GetOperatorId(&bind.CallOpts{}, operator.operatorAddr)
@@ -253,15 +267,8 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 	// 	return nil, err
 	// }
 	// operator.operatorId = operatorId
-	// logger.Info("Operator info",
-	// 	"operatorId", operatorId,
-	// 	"operatorAddr", c.OperatorAddress,
-	// 	"operatorG1Pubkey", operator.blsKeypair.GetPubKeyG1(),
-	// 	"operatorG2Pubkey", operator.blsKeypair.GetPubKeyG2(),
-	// )
 
-	return operator, nil
-
+	return nil
 }
 
 func (o *Operator) Start(ctx context.Context) error {

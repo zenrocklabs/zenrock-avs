@@ -32,8 +32,11 @@ func RegisterOperatorWithEigenlayer(ctx *cli.Context) error {
 		return err
 	}
 
-	err = operator.RegisterOperatorWithEigenlayer()
-	if err != nil {
+	if err = operator.RegistrationSetup(); err != nil {
+		return err
+	}
+
+	if err = operator.RegisterOperatorWithEigenlayer(); err != nil {
 		return err
 	}
 
