@@ -1,3 +1,10 @@
+## [1.4.16](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.15...v1.4.16) (2025-01-23)
+
+
+### Bug Fixes
+
+* implement deregister CLI cmd ([181a708](https://github.com/zenrocklabs/zenrock-avs/commit/181a70896ef5d3dec1872b9bc9036ccfa8ca1519))
+
 ## [1.4.15](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.14...v1.4.15) (2025-01-23)
 
 
