@@ -1,3 +1,10 @@
+## [1.4.17](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.16...v1.4.17) (2025-01-28)
+
+
+### Bug Fixes
+
+* remove duplicate config field ([ac9e7b7](https://github.com/zenrocklabs/zenrock-avs/commit/ac9e7b7506cb7fce8948ab35ec39b504493b8e3e))
+
 ## [1.4.16](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.15...v1.4.16) (2025-01-23)
 
 
