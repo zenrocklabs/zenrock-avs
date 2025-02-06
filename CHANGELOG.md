@@ -1,3 +1,10 @@
+## [1.4.18](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.17...v1.4.18) (2025-02-06)
+
+
+### Bug Fixes
+
+* pass sidecar oracle to operator ([aeacdd5](https://github.com/zenrocklabs/zenrock-avs/commit/aeacdd5ade2881f710431aaff9541549713eddb9))
+
 ## [1.4.17](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.16...v1.4.17) (2025-01-28)
 
 
