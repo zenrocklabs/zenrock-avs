@@ -2,10 +2,8 @@ package operator
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"slices"
-	"sync/atomic"
 
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/ethereum/go-ethereum/common"
@@ -70,14 +68,18 @@ type Operator struct {
 	// needed when opting in to avs (allow this service manager contract to slash operator)
 	credibleSquaringServiceManagerAddr common.Address
 	// zenrock chain client
-	zrChainClient   *client.QueryClient
-	sidecarStatePtr *atomic.Value
+	sidecarOracle SidecarOracle
+}
+
+type SidecarOracle interface {
+	GetSidecarState() *sidecartypes.OracleState
+	GetZrChainQueryClient() *client.QueryClient
 }
 
 // TODO(samlaf): config is a mess right now, since the chainio client constructors
 //
 //	take the config in core (which is shared with aggregator and challenger)
-func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*Operator, error) {
+func NewOperatorFromConfig(c types.NodeConfig, sidecarOracle SidecarOracle) (*Operator, error) {
 	var logLevel logging.LogLevel
 	if c.Production {
 		logLevel = sdklogging.Production
@@ -163,11 +165,6 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		return nil, err
 	}
 
-	zrChainClient, err := client.NewQueryClient(c.ZRChainRPCAddress, true)
-	if err != nil {
-		return nil, fmt.Errorf("Refresh Address Client: failed to get new client: %w", err)
-	}
-
 	operator := &Operator{
 		config:                             c,
 		logger:                             logger,
@@ -184,8 +181,7 @@ func NewOperatorFromConfig(c types.NodeConfig, sidecarStatePtr *atomic.Value) (*
 		newTaskCreatedChan:                 make(chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated),
 		credibleSquaringServiceManagerAddr: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		operatorId:                         [32]byte{0}, // this is set below
-		zrChainClient:                      zrChainClient,
-		sidecarStatePtr:                    sidecarStatePtr,
+		sidecarOracle:                      sidecarOracle,
 	}
 
 	return operator, nil
@@ -327,7 +323,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 	pageReq := &query.PageRequest{}
 
 	for {
-		resp, err := o.zrChainClient.ValidationQueryClient.BondedValidators(context.Background(), pageReq)
+		resp, err := o.sidecarOracle.GetZrChainQueryClient().ValidationQueryClient.BondedValidators(context.Background(), pageReq)
 		if err != nil {
 			o.logger.Error("Error getting active validator set for zrChain", "err", err)
 		}
@@ -343,7 +339,7 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 		pageReq.Key = resp.Pagination.NextKey
 	}
 
-	sidecarState := o.sidecarStatePtr.Load().(*sidecartypes.OracleState)
+	sidecarState := o.sidecarOracle.GetSidecarState()
 	delegatedValidators := make([]string, 0, len(sidecarState.EigenDelegations))
 	for k := range sidecarState.EigenDelegations {
 		delegatedValidators = append(delegatedValidators, k)
