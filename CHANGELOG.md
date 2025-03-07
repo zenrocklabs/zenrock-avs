@@ -1,3 +1,11 @@
+# [1.5.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.18...v1.5.0) (2025-03-07)
+
+
+### Features
+
+* add strategy remover ([7c7315e](https://github.com/zenrocklabs/zenrock-avs/commit/7c7315eb2edc6f667ae908f45adfcc1f22f099e8))
+* gas estimation for strategy adder ([24e2ff2](https://github.com/zenrocklabs/zenrock-avs/commit/24e2ff2e37ad4cd9195268cd683cb2d6a333c624))
+
 ## [1.4.18](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.17...v1.4.18) (2025-02-06)
 
 
