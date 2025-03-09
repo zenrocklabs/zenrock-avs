@@ -17,25 +17,25 @@ func main() {
 	}
 
 	// contract address is our AVS' StakeRegistry proxy (not implementation)
-	stakeReg, err := NewContractStakeRegistry(common.HexToAddress("0xf12a98238e2532e6911AdaFAdb2c617AD0e1F01f"), ethRpcClient)
+	stakeReg, err := NewContractStakeRegistry(common.HexToAddress("0x68BD5a90EEcF77E96d93cf593d5e7b361793c8E2"), ethRpcClient)
 	if err != nil {
 		panic(err)
 	}
 
-	file, err := os.Open("key.json")
+	file, err := os.Open("key2.json")
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
-	opts, err := bind.NewTransactorWithChainID(file, "", big.NewInt(17000))
+	opts, err := bind.NewTransactorWithChainID(file, "", big.NewInt(1))
 	if err != nil {
 		panic(err)
 	}
 
 	// contract address is EigenLayer's WETH StrategyBase proxy (not implementation)
 	if _, err := stakeReg.AddStrategies(opts, 0, []IStakeRegistryStrategyParams{{
-		Strategy:   common.HexToAddress("0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9"), // proxy
+		Strategy:   common.HexToAddress("0xa5430Ca83713F877B77b54d5A24FD3D230DF854B"), // proxy
 		Multiplier: big.NewInt(1000000000000000000),
 	}}); err != nil {
 		panic(err)

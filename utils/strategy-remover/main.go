@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	ethRpcClient, err := eth.NewClient("https://alien-fittest-dew.ethereum-holesky.quiknode.pro/83464d9ac98adf68666cc53b8f8743ad7309335e/") // add RPC URL here
+	ethRpcClient, err := eth.NewClient("") // add RPC URL here
 	if err != nil {
 		panic(err)
 	}

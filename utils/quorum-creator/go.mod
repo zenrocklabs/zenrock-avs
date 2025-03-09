@@ -1,4 +1,4 @@
-module github.com/zenrocklabs/zenrock-avs/strategy-adder
+module github.com/zenrocklabs/zenrock-avs/utils/quorum-creator
 
 go 1.23.0
 

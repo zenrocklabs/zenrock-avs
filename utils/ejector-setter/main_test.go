@@ -11,17 +11,17 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func TestEstimateGasForAddStrategies(t *testing.T) {
+func TestEstimateGasForSetEjector(t *testing.T) {
 	// Setup the Ethereum client
-	ethRpcClient, err := eth.NewClient("https://rpc.ankr.com/eth") // add RPC URL here
+	ethRpcClient, err := eth.NewClient("") // add RPC URL here
 	if err != nil {
 		t.Fatalf("Failed to create Ethereum client: %v", err)
 	}
 
-	// Initialize the StakeRegistry contract
-	stakeReg, err := NewContractStakeRegistry(common.HexToAddress("0x68BD5a90EEcF77E96d93cf593d5e7b361793c8E2"), ethRpcClient)
+	// Initialize the RegistryCoordinator contract
+	stakeReg, err := NewContractZrRegistryCoordinator(common.HexToAddress("0xFbFECE8f29f499c32206d8bFfA57da2b124790C7"), ethRpcClient)
 	if err != nil {
-		t.Fatalf("Failed to initialize StakeRegistry contract: %v", err)
+		t.Fatalf("Failed to initialize RegistryCoordinator contract: %v", err)
 	}
 
 	// Open the key file
@@ -32,7 +32,7 @@ func TestEstimateGasForAddStrategies(t *testing.T) {
 	defer file.Close()
 
 	// Create transaction options
-	opts, err := bind.NewTransactorWithChainID(file, "", big.NewInt(17000))
+	opts, err := bind.NewTransactorWithChainID(file, "", big.NewInt(1))
 	if err != nil {
 		t.Fatalf("Failed to create transaction options: %v", err)
 	}
@@ -44,20 +44,17 @@ func TestEstimateGasForAddStrategies(t *testing.T) {
 	// Ensure value is set to 0
 	opts.Value = big.NewInt(0)
 
-	// Define the strategy parameters
-	strategyParams := []IStakeRegistryStrategyParams{{
-		Strategy:   common.HexToAddress("0xa5430Ca83713F877B77b54d5A24FD3D230DF854B"),
-		Multiplier: big.NewInt(1000000000000000000),
-	}}
+	// Define the ejector address (AVS ServiceManager proxy)
+	ejectorAddress := common.HexToAddress("0x4ca852BD78D9B7295874A7D223023Bff011b7EB3")
 
-	// Estimate gas for adding strategies
-	tx, err := stakeReg.AddStrategies(opts, 0, strategyParams)
+	// Estimate gas for setting the ejector
+	tx, err := stakeReg.SetEjector(opts, ejectorAddress)
 	if err != nil {
-		t.Fatalf("Failed to estimate gas for adding strategies: %v", err)
+		t.Fatalf("Failed to estimate gas for setting ejector: %v", err)
 	}
 
 	// Print the estimated gas
-	fmt.Printf("Estimated gas for adding strategies: %d\n", tx.Gas())
+	fmt.Printf("Estimated gas for setting ejector: %d\n", tx.Gas())
 
 	// You can also print other transaction details
 	fmt.Printf("Transaction data size: %d bytes\n", len(tx.Data()))
