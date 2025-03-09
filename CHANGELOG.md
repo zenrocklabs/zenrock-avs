@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.5.0...v1.6.0) (2025-03-09)
+
+
+### Features
+
+* quorum creator + ejector setter utils ([1324a95](https://github.com/zenrocklabs/zenrock-avs/commit/1324a950b5c2274ce116f9d2c63a38cc1b093d91))
+
 # [1.5.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.4.18...v1.5.0) (2025-03-07)
 
 
