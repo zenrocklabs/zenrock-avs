@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.0...v1.6.1) (2025-03-12)
+
+
+### Bug Fixes
+
+* update `operator.anvil.yaml` with mainnet config ([9ebd753](https://github.com/zenrocklabs/zenrock-avs/commit/9ebd753a6578b4bc4d846e1a122d5402a22cab15))
+
 # [1.6.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.5.0...v1.6.0) (2025-03-09)
 
 
