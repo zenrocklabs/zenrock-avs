@@ -1,8 +1,8 @@
 # this sets the logger level (true = info, false = debug)
 production: true
 
-operator_address: 0x5e7fe0520Ba40FA7cFc4e5294a4cFaE1ba1f4f4E
-operator_validator_address: zenvaloper126hek6zagmp3jqf97x7pq7c0j9jqs0ndvcepy6
+operator_address: 0x4b2d2fe4dfa633c8a43fcecc05eae4f4a84ef9f7
+operator_validator_address: zenvaloper1apxnaymsp7drsjp9dhej05j5yjz8q0zj28z9wm
 zr_chain_rpc_address: localhost:9090
 
 # EigenLayer Slasher contract address
@@ -10,18 +10,18 @@ zr_chain_rpc_address: localhost:9090
 # This is the address of the contracts which are deployed in the anvil saved state
 # The saved eigenlayer state is located in tests/anvil/credible_squaring_avs_deployment_output.json
 # TODO(samlaf): automate updating these addresses when we deploy new contracts
-avs_registry_coordinator_address: 0xb0d6ecDB2922571Ba0Fef3FbbbC49e401926Dd4f
-operator_state_retriever_address: 0x84106d33904dD10Ff73Eaf9660f060c89Ed1E323
+avs_registry_coordinator_address: 0xFbFECE8f29f499c32206d8bFfA57da2b124790C7
+operator_state_retriever_address: 0x03d0452e70711f169eB6B6F5Ab33d8571c313ef6
 
 # ETH RPC URL
-eth_rpc_url:
-eth_ws_url:
+eth_rpc_url: 
+eth_ws_url: 
 
 # If you running this using eigenlayer CLI and the provided AVS packaging structure,
 # this should be /operator_keys/ecdsa_key.json as the host path will be asked while running
 #
 # If you are running locally using go run main.go, this should be full path to your local ecdsa key file
-ecdsa_private_key_store_path: tests/keys/test.ecdsa.key.json
+ecdsa_private_key_store_path: ../tests/keys/test.ecdsa.key.json
 
 # If you running this using eigenlayer CLI and the provided AVS packaging structure,
 # this should be /operator_keys/bls_key.json as the host path will be asked while running
@@ -29,7 +29,7 @@ ecdsa_private_key_store_path: tests/keys/test.ecdsa.key.json
 # We are using bn254 curve for bls keys
 #
 # If you are running locally using go run main.go, this should be full path to your local bls key file
-bls_private_key_store_path: tests/keys/test.bls.key.json
+bls_private_key_store_path: ../tests/keys/test.bls.key.json
 
 # address which the aggregator listens on for operator signed messages
 aggregator_server_ip_port_address: localhost:8090
@@ -41,4 +41,4 @@ enable_node_api: true
 
 # address of token to deposit tokens into when registering on startup
 # addresses.erc20MockStrategy in tests/anvil/credible_squaring_avs_deployment_output.json
-token_strategy_addr: 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9
+token_strategy_addr: 0xa5430Ca83713F877B77b54d5A24FD3D230DF854B
