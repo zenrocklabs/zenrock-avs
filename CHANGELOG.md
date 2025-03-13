@@ -1,3 +1,10 @@
+## [1.6.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.1...v1.6.2) (2025-03-13)
+
+
+### Bug Fixes
+
+* update task cadence for mainnet ([92362bd](https://github.com/zenrocklabs/zenrock-avs/commit/92362bd46a8b6ceb8dd9328796c0a27d2ccad030))
+
 ## [1.6.1](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.0...v1.6.1) (2025-03-12)
 
 
