@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -29,7 +30,7 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 	avsName                  = "zenrock"
 
-	taskCadence               = 5 * time.Minute
+	taskCadence               = 7 * 24 * time.Hour
 	responseDelay             = 30 * time.Second
 	quorumThresholdPercentage = 67
 )
@@ -132,7 +133,7 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 
 	// TODO(soubhik): refactor task generation/sending into a separate function that we can run as goroutine
 	ticker := time.NewTicker(taskCadence)
-	agg.logger.Infof("Aggregator set to send new task every %s...", taskCadence)
+	agg.logger.Infof("Aggregator set to send new task every %s...", formatDuration(taskCadence))
 	defer ticker.Stop()
 
 	// Initialize currentTaskId
@@ -236,4 +237,18 @@ func (agg *Aggregator) sendNewTask() error {
 
 	agg.blsAggregationService.InitializeNewTask(taskIndex, newTask.TaskCreatedBlock, quorumNums, quorumThresholdPercentages, taskTimeToExpiry)
 	return nil
+}
+
+// formatDuration formats time.Duration in the most appropriate units for human readability
+func formatDuration(d time.Duration) string {
+	switch {
+	case d.Hours() >= 24:
+		return fmt.Sprintf("%d days", int(d.Hours()/24))
+	case d.Hours() >= 1:
+		return fmt.Sprintf("%d hours", int(d.Hours()))
+	case d.Minutes() >= 1:
+		return fmt.Sprintf("%d minutes", int(d.Minutes()))
+	default:
+		return fmt.Sprintf("%d seconds", int(d.Seconds()))
+	}
 }
