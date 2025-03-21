@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.2...v1.6.3) (2025-03-21)
+
+
+### Bug Fixes
+
+* update imports ([be3c166](https://github.com/zenrocklabs/zenrock-avs/commit/be3c16645a9bbb5b3f7c41476b40e82c012bd601))
+
 ## [1.6.2](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.1...v1.6.2) (2025-03-13)
 
 
