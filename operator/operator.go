@@ -16,7 +16,7 @@ import (
 	"github.com/zenrocklabs/zenrock-avs/metrics"
 	"github.com/zenrocklabs/zenrock-avs/types"
 
-	"github.com/Zenrock-Foundation/zrchain/v5/go-client"
+	"github.com/Zenrock-Foundation/zrchain/v6/go-client"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -33,7 +33,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
-	sidecartypes "github.com/Zenrock-Foundation/zrchain/v5/sidecar/shared"
+	sidecartypes "github.com/Zenrock-Foundation/zrchain/v6/sidecar/shared"
 )
 
 const AVS_NAME = "zenrock-avs"
