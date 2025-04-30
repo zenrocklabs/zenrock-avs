@@ -1,3 +1,10 @@
+## [1.6.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.3...v1.6.4) (2025-04-30)
+
+
+### Bug Fixes
+
+* fail gracefully on zrchain connection error ([c5e4307](https://github.com/zenrocklabs/zenrock-avs/commit/c5e43072b4a89694638933c2babacda66d753346))
+
 ## [1.6.3](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.2...v1.6.3) (2025-03-21)
 
 
