@@ -299,6 +299,9 @@ func (o *Operator) Start(ctx context.Context) error {
 		case newTaskCreatedLog := <-o.newTaskCreatedChan:
 			o.metrics.IncNumTasksReceived()
 			taskResponse := o.ProcessNewTaskCreatedLog(newTaskCreatedLog)
+			if taskResponse == nil {
+				continue
+			}
 			signedTaskResponse, err := o.SignTaskResponse(taskResponse)
 			if err != nil {
 				continue
@@ -324,8 +327,9 @@ func (o *Operator) ProcessNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.Con
 
 	for {
 		resp, err := o.sidecarOracle.GetZrChainQueryClient().ValidationQueryClient.BondedValidators(context.Background(), pageReq)
-		if err != nil {
+		if err != nil || resp == nil {
 			o.logger.Error("Error getting active validator set for zrChain", "err", err)
+			return nil
 		}
 
 		for _, validator := range resp.Validators {
