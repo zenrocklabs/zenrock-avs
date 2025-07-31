@@ -4,15 +4,14 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/urfave/cli"
-
 	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/urfave/cli"
 	"github.com/zenrocklabs/zenrock-avs/core/config"
 	"github.com/zenrocklabs/zenrock-avs/operator"
 	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
-func RegisterOperatorWithEigenlayer(ctx *cli.Context) error {
+func DeregisterOperatorWithAvs(ctx *cli.Context) error {
 
 	configPath := ctx.GlobalString(config.ConfigFileFlag.Name)
 	nodeConfig := types.NodeConfig{}
@@ -36,7 +35,7 @@ func RegisterOperatorWithEigenlayer(ctx *cli.Context) error {
 		return err
 	}
 
-	if err = operator.RegisterOperatorWithEigenlayer(); err != nil {
+	if err = operator.DeregisterOperatorWithAvs(); err != nil {
 		return err
 	}
 

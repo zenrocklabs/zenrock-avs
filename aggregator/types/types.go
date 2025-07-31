@@ -18,9 +18,25 @@ const QUERY_FILTER_FROM_BLOCK = uint64(1)
 var QUORUM_NUMBERS = sdktypes.QuorumNums{0}
 
 type BlockNumber = uint32
-type TaskIndex = uint32
+type TaskId = uint32
+type ZrChainBlockHeight = int64
 
 type OperatorInfo struct {
 	OperatorPubkeys sdktypes.OperatorPubkeys
 	OperatorAddr    common.Address
+}
+
+// Add a new struct for the updated Task
+type Task struct {
+	TaskId                    TaskId
+	TaskCreatedBlock          BlockNumber
+	ZrChainBlockHeight        ZrChainBlockHeight
+	QuorumNumbers             sdktypes.QuorumNums
+	QuorumThresholdPercentage sdktypes.QuorumThresholdPercentage
+}
+
+// Add a new struct for the updated TaskResponse
+type TaskResponse struct {
+	ReferenceTaskId    TaskId
+	ZrChainBlockHeight ZrChainBlockHeight
 }

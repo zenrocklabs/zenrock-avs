@@ -5,32 +5,27 @@ import (
 	"context"
 	"math/big"
 
+	ethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/incredible-squaring-avs/common"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	commoneth "github.com/ethereum/go-ethereum/common"
-	typeseth "github.com/ethereum/go-ethereum/core/types"
+	"github.com/zenrocklabs/zenrock-avs/common"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
 
-	"github.com/Layr-Labs/incredible-squaring-avs/challenger/types"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
+	"github.com/zenrocklabs/zenrock-avs/challenger/types"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core/chainio"
 )
-
-type ChallengerClient interface {
-	TransactionByHash(ctx context.Context, hash commoneth.Hash) (tx *typeseth.Transaction, isPending bool, err error)
-}
 
 type Challenger struct {
 	logger             logging.Logger
-	ethClient          ChallengerClient
+	ethClient          ethclient.Client
 	avsReader          chainio.AvsReaderer
 	avsWriter          chainio.AvsWriterer
 	avsSubscriber      chainio.AvsSubscriberer
-	tasks              map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask
+	tasks              map[uint32]cstaskmanager.ZrServiceManagerLibTask
 	taskResponses      map[uint32]types.TaskResponseData
-	taskResponseChan   chan *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded
-	newTaskCreatedChan chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
+	taskResponseChan   chan *cstaskmanager.ContractZrTaskManagerTaskResponded
+	newTaskCreatedChan chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated
 }
 
 func NewChallenger(c *config.Config) (*Challenger, error) {
@@ -52,15 +47,15 @@ func NewChallenger(c *config.Config) (*Challenger, error) {
 	}
 
 	challenger := &Challenger{
+		ethClient:          c.EthHttpClient,
 		logger:             c.Logger,
-		ethClient:          &c.EthHttpClient,
-		avsReader:          avsReader,
 		avsWriter:          avsWriter,
+		avsReader:          avsReader,
 		avsSubscriber:      avsSubscriber,
-		tasks:              make(map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask),
+		tasks:              make(map[uint32]cstaskmanager.ZrServiceManagerLibTask),
 		taskResponses:      make(map[uint32]types.TaskResponseData),
-		taskResponseChan:   make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded),
-		newTaskCreatedChan: make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated),
+		taskResponseChan:   make(chan *cstaskmanager.ContractZrTaskManagerTaskResponded),
+		newTaskCreatedChan: make(chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated),
 	}
 
 	return challenger, nil
@@ -78,15 +73,13 @@ func (c *Challenger) Start(ctx context.Context) error {
 	for {
 		select {
 		case err := <-newTaskSub.Err():
-			// TODO(samlaf): Copied from operator. There was a comment about this on when should exactly do these errors
-			// occur? do we need to restart the websocket
+			// TODO(samlaf): Copied from operator. There was a comment about this on when should exactly do these errors occur? do we need to restart the websocket
 			c.logger.Error("Error in websocket subscription for new Task", "err", err)
 			newTaskSub.Unsubscribe()
 			newTaskSub = c.avsSubscriber.SubscribeToNewTasks(c.newTaskCreatedChan)
 
 		case err := <-taskResponseSub.Err():
-			// TODO(samlaf): Copied from operator. There was a comment about this on when should exactly do these errors
-			// occur? do we need to restart the websocket
+			// TODO(samlaf): Copied from operator. There was a comment about this on when should exactly do these errors occur? do we need to restart the websocket
 			c.logger.Error("Error in websocket subscription for task response", "err", err)
 			taskResponseSub.Unsubscribe()
 			taskResponseSub = c.avsSubscriber.SubscribeToTaskResponses(c.taskResponseChan)
@@ -119,57 +112,48 @@ func (c *Challenger) Start(ctx context.Context) error {
 
 }
 
-func (c *Challenger) processNewTaskCreatedLog(
-	newTaskCreatedLog *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated,
-) uint32 {
-	c.tasks[newTaskCreatedLog.TaskIndex] = newTaskCreatedLog.Task
-	return newTaskCreatedLog.TaskIndex
+func (c *Challenger) processNewTaskCreatedLog(newTaskCreatedLog *cstaskmanager.ContractZrTaskManagerNewTaskCreated) uint32 {
+	c.tasks[newTaskCreatedLog.TaskId] = newTaskCreatedLog.Task
+	return newTaskCreatedLog.TaskId
 }
 
-func (c *Challenger) processTaskResponseLog(
-	taskResponseLog *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded,
-) uint32 {
+func (c *Challenger) processTaskResponseLog(taskResponseLog *cstaskmanager.ContractZrTaskManagerTaskResponded) uint32 {
 	taskResponseRawLog, err := c.avsSubscriber.ParseTaskResponded(taskResponseLog.Raw)
 	if err != nil {
-		c.logger.Error(
-			"Error parsing task response. skipping task (this is probably bad and should be investigated)",
-			"err",
-			err,
-		)
+		c.logger.Error("Error parsing task response. skipping task (this is probably bad and should be investigated)", "err", err)
 	}
 
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(taskResponseLog)
 	taskResponseData := types.TaskResponseData{
-		TaskResponse:              taskResponseLog.TaskResponse,
-		TaskResponseMetadata:      taskResponseLog.TaskResponseMetadata,
+		TaskResponse:              taskResponseLog.Response,
+		TaskResponseMetadata:      taskResponseLog.Metadata,
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
-	c.taskResponses[taskResponseRawLog.TaskResponse.ReferenceTaskIndex] = taskResponseData
-	return taskResponseRawLog.TaskResponse.ReferenceTaskIndex
+	c.taskResponses[taskResponseRawLog.Response.ReferenceTaskId] = taskResponseData
+	return taskResponseRawLog.Response.ReferenceTaskId
 }
 
 func (c *Challenger) callChallengeModule(taskIndex uint32) error {
-	numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
-	answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
-	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
+	panic("implement me")
+	// numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
+	// answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
+	// trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
 
-	// checking if the answer in the response submitted by aggregator is correct
-	if trueAnswer.Cmp(answerInResponse) != 0 {
-		c.logger.Infof("The number squared is not correct")
+	// // checking if the answer in the response submitted by aggregator is correct
+	// if trueAnswer.Cmp(answerInResponse) != 0 {
+	// 	c.logger.Infof("The number squared is not correct")
 
-		// raise challenge
-		c.raiseChallenge(taskIndex)
+	// 	// raise challenge
+	// 	c.raiseChallenge(taskIndex)
 
-		return nil
-	}
-	return types.NoErrorInTaskResponse
+	// 	return nil
+	// }
+	// return types.NoErrorInTaskResponse
 }
 
-func (c *Challenger) getNonSigningOperatorPubKeys(
-	vLog *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded,
-) []cstaskmanager.BN254G1Point {
+func (c *Challenger) getNonSigningOperatorPubKeys(vLog *cstaskmanager.ContractZrTaskManagerTaskResponded) []cstaskmanager.BN254G1Point {
 	c.logger.Info("vLog.Raw is", "vLog.Raw", vLog.Raw)
 
 	// get the nonSignerStakesAndSignature
@@ -225,10 +209,7 @@ func (c *Challenger) getNonSigningOperatorPubKeys(
 	})
 
 	// get pubkeys of non-signing operators and submit them to the contract
-	nonSigningOperatorPubKeys := make(
-		[]cstaskmanager.BN254G1Point,
-		len(nonSignerStakesAndSignatureInput.NonSignerPubkeys),
-	)
+	nonSigningOperatorPubKeys := make([]cstaskmanager.BN254G1Point, len(nonSignerStakesAndSignatureInput.NonSignerPubkeys))
 	for i, pubkey := range nonSignerStakesAndSignatureInput.NonSignerPubkeys {
 		nonSigningOperatorPubKeys[i] = cstaskmanager.BN254G1Point{
 			X: pubkey.X,
@@ -244,11 +225,7 @@ func (c *Challenger) raiseChallenge(taskIndex uint32) error {
 	c.logger.Info("Task", "Task", c.tasks[taskIndex])
 	c.logger.Info("TaskResponse", "TaskResponse", c.taskResponses[taskIndex].TaskResponse)
 	c.logger.Info("TaskResponseMetadata", "TaskResponseMetadata", c.taskResponses[taskIndex].TaskResponseMetadata)
-	c.logger.Info(
-		"NonSigningOperatorPubKeys",
-		"NonSigningOperatorPubKeys",
-		c.taskResponses[taskIndex].NonSigningOperatorPubKeys,
-	)
+	c.logger.Info("NonSigningOperatorPubKeys", "NonSigningOperatorPubKeys", c.taskResponses[taskIndex].NonSigningOperatorPubKeys)
 
 	receipt, err := c.avsWriter.RaiseChallenge(
 		context.Background(),

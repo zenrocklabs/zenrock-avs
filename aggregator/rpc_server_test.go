@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -10,11 +9,10 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/incredible-squaring-avs/aggregator/types"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core"
+	"github.com/zenrocklabs/zenrock-avs/aggregator/types"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core"
 )
 
 func TestProcessSignedTaskResponse(t *testing.T) {
@@ -49,23 +47,24 @@ func TestProcessSignedTaskResponse(t *testing.T) {
 		NumberToSquare: NUMBER_TO_SQUARE,
 	}, *MOCK_OPERATOR_KEYPAIR)
 	assert.Nil(t, err)
+	signedTaskResponseDigest, err := core.GetTaskResponseDigest(&signedTaskResponse.TaskResponse)
+	assert.Nil(t, err)
 
 	// TODO(samlaf): is this the right way to test writing to external service?
 	// or is there some wisdom to "don't mock 3rd party code"?
 	// see https://hynek.me/articles/what-to-mock-in-5-mins/
-	taskSignature := blsagg.NewTaskSignature(TASK_INDEX, signedTaskResponse.TaskResponse,
+	mockBlsAggServ.EXPECT().ProcessNewSignature(context.Background(), TASK_INDEX, signedTaskResponseDigest,
 		&signedTaskResponse.BlsSignature, signedTaskResponse.OperatorId)
-	mockBlsAggServ.EXPECT().ProcessNewSignature(context.Background(), taskSignature)
 	err = aggregator.ProcessSignedTaskResponse(signedTaskResponse, nil)
 	assert.Nil(t, err)
 }
 
 // mocks an operator signing on a task response
 func createMockSignedTaskResponse(mockTask MockTask, keypair bls.KeyPair) (*SignedTaskResponse, error) {
-	numberToSquareBigInt := big.NewInt(int64(mockTask.NumberToSquare))
-	taskResponse := &cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-		ReferenceTaskIndex: mockTask.TaskNum,
-		NumberSquared:      numberToSquareBigInt.Mul(numberToSquareBigInt, numberToSquareBigInt),
+	// numberToSquareBigInt := big.NewInt(int64(mockTask.NumberToSquare))
+	taskResponse := &cstaskmanager.ZrServiceManagerLibTaskResponse{
+		ReferenceTaskId: mockTask.TaskNum,
+		// NumberSquared:      numberToSquareBigInt.Mul(numberToSquareBigInt, numberToSquareBigInt),
 	}
 	taskResponseHash, err := core.GetTaskResponseDigest(taskResponse)
 	if err != nil {

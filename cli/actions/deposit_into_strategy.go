@@ -6,32 +6,30 @@ import (
 	"log"
 	"math/big"
 
-	commonincredible "github.com/Layr-Labs/incredible-squaring-avs/common"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
-	"github.com/Layr-Labs/incredible-squaring-avs/operator"
-	"github.com/Layr-Labs/incredible-squaring-avs/types"
+	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/urfave/cli"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
+	"github.com/zenrocklabs/zenrock-avs/operator"
+	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
 func DepositIntoStrategy(ctx *cli.Context) error {
 
 	configPath := ctx.GlobalString(config.ConfigFileFlag.Name)
 	nodeConfig := types.NodeConfig{}
-	err := commonincredible.ReadYamlConfig(configPath, &nodeConfig)
+	err := sdkutils.ReadYamlConfig(configPath, &nodeConfig)
 	if err != nil {
 		return err
 	}
-	// need to make sure we don't register the operator on startup
-	// when using the cli commands to register the operator.
-	nodeConfig.RegisterOperatorOnStartup = false
+
 	configJson, err := json.MarshalIndent(nodeConfig, "", "  ")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 	log.Println("Config:", string(configJson))
 
-	operator, err := operator.NewOperatorFromConfig(nodeConfig)
+	operator, err := operator.NewOperatorFromConfig(nodeConfig, nil)
 	if err != nil {
 		return err
 	}
@@ -45,8 +43,7 @@ func DepositIntoStrategy(ctx *cli.Context) error {
 		return err
 	}
 
-	err = operator.DepositIntoStrategy(strategyAddr, amount)
-	if err != nil {
+	if err = operator.DepositIntoStrategy(strategyAddr, amount); err != nil {
 		return err
 	}
 

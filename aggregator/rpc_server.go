@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"net/rpc"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -37,27 +38,34 @@ func (agg *Aggregator) startServer(ctx context.Context) error {
 	return nil
 }
 
+// Update the SignedTaskResponse struct to reflect the new task structure
 type SignedTaskResponse struct {
-	TaskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
+	TaskResponse cstaskmanager.ZrServiceManagerLibTaskResponse
 	BlsSignature bls.Signature
-	OperatorId   sdktypes.OperatorId
+	OperatorId   types.OperatorId
 }
 
-// rpc endpoint which is called by operator
-// reply doesn't need to be checked. If there are no errors, the task response is accepted
-// rpc framework forces a reply type to exist, so we put bool as a placeholder
+// Update the ProcessSignedTaskResponse function to handle the new task structure
 func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
 	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
-	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
+	taskId := signedTaskResponse.TaskResponse.ReferenceTaskId
+	taskResponseDigest, err := core.GetTaskResponseDigest(&signedTaskResponse.TaskResponse)
+	if err != nil {
+		agg.logger.Error("Failed to get task response digest", "err", err)
+		return TaskResponseDigestNotFoundError500
+	}
+	agg.taskResponsesMu.Lock()
+	if _, ok := agg.taskResponses[taskId]; !ok {
+		agg.taskResponses[taskId] = make(map[sdktypes.TaskResponseDigest]cstaskmanager.ZrServiceManagerLibTaskResponse)
+	}
+	if _, ok := agg.taskResponses[taskId][taskResponseDigest]; !ok {
+		agg.taskResponses[taskId][taskResponseDigest] = signedTaskResponse.TaskResponse
+	}
+	agg.taskResponsesMu.Unlock()
 
-	taskSignature := blsagg.NewTaskSignature(
-		taskIndex,
-		signedTaskResponse.TaskResponse,
-		&signedTaskResponse.BlsSignature,
-		signedTaskResponse.OperatorId,
+	err = agg.blsAggregationService.ProcessNewSignature(
+		context.Background(), taskId, taskResponseDigest,
+		&signedTaskResponse.BlsSignature, signedTaskResponse.OperatorId,
 	)
-
-	err := agg.blsAggregationService.ProcessNewSignature(context.Background(), taskSignature)
-
 	return err
 }

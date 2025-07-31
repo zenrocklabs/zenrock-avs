@@ -7,50 +7,17 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/testutils"
+	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/metrics"
-	"github.com/Layr-Labs/incredible-squaring-avs/tests"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/metrics"
+	"github.com/zenrocklabs/zenrock-avs/tests"
 )
 
 const MOCK_OPERATOR_BLS_PRIVATE_KEY = "69"
 
 // hash of bls_public_key (hardcoded for sk=69)
-var MOCK_OPERATOR_ID = [32]byte{
-	207,
-	73,
-	226,
-	221,
-	104,
-	100,
-	123,
-	41,
-	192,
-	3,
-	9,
-	119,
-	90,
-	83,
-	233,
-	159,
-	231,
-	151,
-	245,
-	96,
-	150,
-	48,
-	144,
-	27,
-	102,
-	253,
-	39,
-	101,
-	1,
-	26,
-	135,
-	173,
-}
+var MOCK_OPERATOR_ID = [32]byte{207, 73, 226, 221, 104, 100, 123, 41, 192, 3, 9, 119, 90, 83, 233, 159, 231, 151, 245, 96, 150, 48, 144, 27, 102, 253, 39, 101, 1, 26, 135, 173}
 
 // Name starts with Integration test because we don't want it to run with go test ./...
 // since this starts a chain and takes longer to run
@@ -65,7 +32,7 @@ func IntegrationTestOperatorRegistration(t *testing.T) {
 }
 
 func createMockOperator() (*Operator, error) {
-	logger := testutils.GetTestLogger()
+	logger := sdklogging.NewNoopLogger()
 	reg := prometheus.NewRegistry()
 	noopMetrics := metrics.NewNoopMetrics()
 
@@ -80,7 +47,7 @@ func createMockOperator() (*Operator, error) {
 		blsKeypair:         operatorKeypair,
 		metricsReg:         reg,
 		metrics:            noopMetrics,
-		newTaskCreatedChan: make(chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated),
+		newTaskCreatedChan: make(chan *cstaskmanager.ContractZrTaskManagerNewTaskCreated),
 		operatorId:         MOCK_OPERATOR_ID,
 	}
 	return operator, nil

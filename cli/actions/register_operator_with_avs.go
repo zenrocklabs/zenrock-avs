@@ -6,31 +6,29 @@ import (
 	"os"
 
 	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
-	commonincredible "github.com/Layr-Labs/incredible-squaring-avs/common"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
-	"github.com/Layr-Labs/incredible-squaring-avs/operator"
-	"github.com/Layr-Labs/incredible-squaring-avs/types"
+	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/urfave/cli"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
+	"github.com/zenrocklabs/zenrock-avs/operator"
+	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
 func RegisterOperatorWithAvs(ctx *cli.Context) error {
 
 	configPath := ctx.GlobalString(config.ConfigFileFlag.Name)
 	nodeConfig := types.NodeConfig{}
-	err := commonincredible.ReadYamlConfig(configPath, &nodeConfig)
+	err := sdkutils.ReadYamlConfig(configPath, &nodeConfig)
 	if err != nil {
 		return err
 	}
-	// need to make sure we don't register the operator on startup
-	// when using the cli commands to register the operator.
-	nodeConfig.RegisterOperatorOnStartup = false
+
 	configJson, err := json.MarshalIndent(nodeConfig, "", "  ")
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 	log.Println("Config:", string(configJson))
 
-	operator, err := operator.NewOperatorFromConfig(nodeConfig)
+	operator, err := operator.NewOperatorFromConfig(nodeConfig, nil)
 	if err != nil {
 		return err
 	}
@@ -47,8 +45,11 @@ func RegisterOperatorWithAvs(ctx *cli.Context) error {
 		return err
 	}
 
-	err = operator.RegisterOperatorWithAvs(operatorEcdsaPrivKey)
-	if err != nil {
+	if err = operator.RegistrationSetup(); err != nil {
+		return err
+	}
+
+	if err = operator.RegisterOperatorWithAvs(operatorEcdsaPrivKey); err != nil {
 		return err
 	}
 

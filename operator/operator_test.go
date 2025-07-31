@@ -14,11 +14,11 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 
-	"github.com/Layr-Labs/incredible-squaring-avs/aggregator"
-	aggtypes "github.com/Layr-Labs/incredible-squaring-avs/aggregator/types"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	chainiomocks "github.com/Layr-Labs/incredible-squaring-avs/core/chainio/mocks"
-	operatormocks "github.com/Layr-Labs/incredible-squaring-avs/operator/mocks"
+	"github.com/zenrocklabs/zenrock-avs/aggregator"
+	aggtypes "github.com/zenrocklabs/zenrock-avs/aggregator/types"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
+	chainiomocks "github.com/zenrocklabs/zenrock-avs/core/chainio/mocks"
+	operatormocks "github.com/zenrocklabs/zenrock-avs/operator/mocks"
 )
 
 func TestOperator(t *testing.T) {
@@ -27,11 +27,10 @@ func TestOperator(t *testing.T) {
 	const taskIndex = 1
 
 	t.Run("ProcessNewTaskCreatedLog", func(t *testing.T) {
-		var numberToBeSquared = big.NewInt(3)
-		newTaskCreatedLog := &cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated{
-			TaskIndex: taskIndex,
-			Task: cstaskmanager.IIncredibleSquaringTaskManagerTask{
-				NumberToBeSquared:         numberToBeSquared,
+		// var numberToBeSquared = big.NewInt(3)
+		newTaskCreatedLog := &cstaskmanager.ContractZrTaskManagerNewTaskCreated{
+			TaskId: taskIndex,
+			Task: cstaskmanager.ZrServiceManagerLibTask{
 				TaskCreatedBlock:          1000,
 				QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
 				QuorumThresholdPercentage: uint32(aggtypes.QUORUM_THRESHOLD_NUMERATOR),
@@ -39,22 +38,22 @@ func TestOperator(t *testing.T) {
 			Raw: types.Log{},
 		}
 		got := operator.ProcessNewTaskCreatedLog(newTaskCreatedLog)
-		numberSquared := big.NewInt(0).Mul(numberToBeSquared, numberToBeSquared)
-		want := &cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-			ReferenceTaskIndex: taskIndex,
-			NumberSquared:      numberSquared,
+		// numberSquared := big.NewInt(0).Mul(numberToBeSquared, numberToBeSquared)
+		want := &cstaskmanager.ZrServiceManagerLibTaskResponse{
+			ReferenceTaskId: taskIndex,
+			// NumberSquared:      numberSquared,
 		}
 		assert.Equal(t, got, want)
 	})
 
 	t.Run("Start", func(t *testing.T) {
-		var numberToBeSquared = big.NewInt(3)
+		// var numberToBeSquared = big.NewInt(3)
 
 		// new task event
-		newTaskCreatedEvent := &cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated{
-			TaskIndex: taskIndex,
-			Task: cstaskmanager.IIncredibleSquaringTaskManagerTask{
-				NumberToBeSquared:         numberToBeSquared,
+		newTaskCreatedEvent := &cstaskmanager.ContractZrTaskManagerNewTaskCreated{
+			TaskId: taskIndex,
+			Task: cstaskmanager.ZrServiceManagerLibTask{
+				// NumberToBeSquared:         numberToBeSquared,
 				TaskCreatedBlock:          1000,
 				QuorumNumbers:             aggtypes.QUORUM_NUMBERS.UnderlyingType(),
 				QuorumThresholdPercentage: uint32(aggtypes.QUORUM_THRESHOLD_NUMERATOR),
@@ -62,17 +61,15 @@ func TestOperator(t *testing.T) {
 			Raw: types.Log{},
 		}
 		fmt.Println("newTaskCreatedEvent", newTaskCreatedEvent)
-		X, ok := big.NewInt(0).
-			SetString("7926134832136282318561896451042374984489965925674521194255549259381336496956", 10)
+		X, ok := big.NewInt(0).SetString("7926134832136282318561896451042374984489965925674521194255549259381336496956", 10)
 		assert.True(t, ok)
-		Y, ok := big.NewInt(0).
-			SetString("15243507701692917330954619280683582177901049846125926696838777109165913318327", 10)
+		Y, ok := big.NewInt(0).SetString("15243507701692917330954619280683582177901049846125926696838777109165913318327", 10)
 		assert.True(t, ok)
 
 		signedTaskResponse := &aggregator.SignedTaskResponse{
-			TaskResponse: cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-				ReferenceTaskIndex: taskIndex,
-				NumberSquared:      big.NewInt(0).Mul(numberToBeSquared, numberToBeSquared),
+			TaskResponse: cstaskmanager.ZrServiceManagerLibTaskResponse{
+				ReferenceTaskId: taskIndex,
+				// NumberSquared:      big.NewInt(0).Mul(numberToBeSquared, numberToBeSquared),
 			},
 			BlsSignature: bls.Signature{
 				G1Point: bls.NewG1Point(X, Y),
@@ -87,13 +84,11 @@ func TestOperator(t *testing.T) {
 		operator.aggregatorRpcClient = mockAggregatorRpcClient
 
 		mockSubscriber := chainiomocks.NewMockAvsSubscriberer(mockCtrl)
-		mockSubscriber.EXPECT().
-			SubscribeToNewTasks(operator.newTaskCreatedChan).
-			Return(event.NewSubscription(func(quit <-chan struct{}) error {
-				// loop forever
-				<-quit
-				return nil
-			}))
+		mockSubscriber.EXPECT().SubscribeToNewTasks(operator.newTaskCreatedChan).Return(event.NewSubscription(func(quit <-chan struct{}) error {
+			// loop forever
+			<-quit
+			return nil
+		}))
 		operator.avsSubscriber = mockSubscriber
 
 		mockReader := chainiomocks.NewMockAvsReaderer(mockCtrl)
