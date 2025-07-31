@@ -15,8 +15,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
-	commonincredible "github.com/Layr-Labs/incredible-squaring-avs/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	commonincredible "github.com/zenrocklabs/zenrock-avs/common"
 
 	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 )

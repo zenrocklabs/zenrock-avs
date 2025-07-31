@@ -4,96 +4,58 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	sdkavsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 
-	sdkcommon "github.com/Layr-Labs/incredible-squaring-avs/common"
-	erc20mock "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/ERC20Mock"
-	cstaskmanager "github.com/Layr-Labs/incredible-squaring-avs/contracts/bindings/IncredibleSquaringTaskManager"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
+	cstaskmanager "github.com/zenrocklabs/zenrock-avs/contracts/bindings/ZrTaskManager"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
 )
 
 type AvsReaderer interface {
-	//sdkavsregistry.ChainReader
+	sdkavsregistry.AvsRegistryReader
 
 	CheckSignatures(
 		ctx context.Context, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
 	) (cstaskmanager.IBLSSignatureCheckerQuorumStakeTotals, error)
-	GetErc20Mock(ctx context.Context, tokenAddr common.Address) (*erc20mock.ContractERC20Mock, error)
-	GetOperatorId(
-		opts *bind.CallOpts,
-		operatorAddress common.Address,
-	) ([32]byte, error)
-	IsOperatorRegistered(
-		opts *bind.CallOpts,
-		operatorAddress common.Address,
-	) (bool, error)
+	GetLatestTaskNumber(ctx context.Context) (uint32, error)
+	// GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error)
 }
 
 type AvsReader struct {
-	sdkavsregistry.ChainReader
+	sdkavsregistry.AvsRegistryReader
 	AvsServiceBindings *AvsManagersBindings
 	logger             logging.Logger
 }
 
-//var _ AvsReaderer = (*AvsReader)(nil)
+var _ AvsReaderer = (*AvsReader)(nil)
 
 func BuildAvsReaderFromConfig(c *config.Config) (*AvsReader, error) {
-	return BuildAvsReader(
-		c.IncredibleSquaringRegistryCoordinatorAddr,
-		c.OperatorStateRetrieverAddr,
-		&c.EthHttpClient,
-		c.Logger,
-	)
+	return BuildAvsReader(c.IncredibleSquaringRegistryCoordinatorAddr, c.OperatorStateRetrieverAddr, &c.EthHttpClient, c.Logger)
 }
-
-func BuildAvsReader(
-	registryCoordinatorAddr, operatorStateRetrieverAddr common.Address,
-	ethHttpClient sdkcommon.EthClientInterface,
-	logger logging.Logger,
-) (*AvsReader, error) {
-	avsManagersBindings, err := NewAvsManagersBindings(
-		registryCoordinatorAddr,
-		operatorStateRetrieverAddr,
-		ethHttpClient,
-		logger,
-	)
+func BuildAvsReader(registryCoordinatorAddr, operatorStateRetrieverAddr gethcommon.Address, ethHttpClient eth.Client, logger logging.Logger) (*AvsReader, error) {
+	avsManagersBindings, err := NewAvsManagersBindings(registryCoordinatorAddr, operatorStateRetrieverAddr, ethHttpClient, logger)
 	if err != nil {
 		return nil, err
 	}
-	config := sdkavsregistry.Config{
-		RegistryCoordinatorAddress:    registryCoordinatorAddr,
-		OperatorStateRetrieverAddress: operatorStateRetrieverAddr,
-
-		DontUseAllocationManager: true,
-	}
-	avsRegistryReader, err := sdkavsregistry.NewReaderFromConfig(config, ethHttpClient, logger)
+	avsRegistryReader, err := sdkavsregistry.BuildAvsRegistryChainReader(registryCoordinatorAddr, operatorStateRetrieverAddr, ethHttpClient, logger)
 	if err != nil {
 		return nil, err
 	}
-	return NewAvsReader(*avsRegistryReader, avsManagersBindings, logger)
+	return NewAvsReader(avsRegistryReader, avsManagersBindings, logger)
 }
-
-func NewAvsReader(
-	avsRegistryReader sdkavsregistry.ChainReader,
-	avsServiceBindings *AvsManagersBindings,
-	logger logging.Logger,
-) (*AvsReader, error) {
+func NewAvsReader(avsRegistryReader sdkavsregistry.AvsRegistryReader, avsServiceBindings *AvsManagersBindings, logger logging.Logger) (*AvsReader, error) {
 	return &AvsReader{
-		ChainReader:        avsRegistryReader,
+		AvsRegistryReader:  avsRegistryReader,
 		AvsServiceBindings: avsServiceBindings,
 		logger:             logger,
 	}, nil
 }
 
 func (r *AvsReader) CheckSignatures(
-	ctx context.Context,
-	msgHash [32]byte,
-	quorumNumbers []byte,
-	referenceBlockNumber uint32,
-	nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
+	ctx context.Context, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerNonSignerStakesAndSignature,
 ) (cstaskmanager.IBLSSignatureCheckerQuorumStakeTotals, error) {
 	stakeTotalsPerQuorum, _, err := r.AvsServiceBindings.TaskManager.CheckSignatures(
 		&bind.CallOpts{}, msgHash, quorumNumbers, referenceBlockNumber, nonSignerStakesAndSignature,
@@ -104,11 +66,19 @@ func (r *AvsReader) CheckSignatures(
 	return stakeTotalsPerQuorum, nil
 }
 
-func (r *AvsReader) GetErc20Mock(ctx context.Context, tokenAddr common.Address) (*erc20mock.ContractERC20Mock, error) {
-	erc20Mock, err := r.AvsServiceBindings.GetErc20Mock(tokenAddr)
+func (r *AvsReader) GetLatestTaskNumber(ctx context.Context) (uint32, error) {
+	latestTask, err := r.AvsServiceBindings.TaskManager.GetTaskNumber(&bind.CallOpts{})
 	if err != nil {
-		r.logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-		return nil, err
+		return 0, err
 	}
-	return erc20Mock, nil
+	return latestTask, nil
 }
+
+// func (r *AvsReader) GetErc20Mock(ctx context.Context, tokenAddr gethcommon.Address) (*erc20mock.ContractERC20Mock, error) {
+// 	erc20Mock, err := r.AvsServiceBindings.GetErc20Mock(tokenAddr)
+// 	if err != nil {
+// 		r.logger.Error("Failed to fetch ERC20Mock contract", "err", err)
+// 		return nil, err
+// 	}
+// 	return erc20Mock, nil
+// }

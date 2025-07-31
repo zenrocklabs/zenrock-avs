@@ -8,10 +8,10 @@ import (
 
 	"github.com/urfave/cli"
 
-	commonincredible "github.com/Layr-Labs/incredible-squaring-avs/common"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/config"
-	"github.com/Layr-Labs/incredible-squaring-avs/operator"
-	"github.com/Layr-Labs/incredible-squaring-avs/types"
+	commonincredible "github.com/zenrocklabs/zenrock-avs/common"
+	"github.com/zenrocklabs/zenrock-avs/core/config"
+	"github.com/zenrocklabs/zenrock-avs/operator"
+	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
 func main() {
@@ -44,7 +44,7 @@ func operatorMain(ctx *cli.Context) error {
 	log.Println("Config:", string(configJson))
 
 	log.Println("initializing operator")
-	operator, err := operator.NewOperatorFromConfig(nodeConfig)
+	operator, err := operator.NewOperatorFromConfig(nodeConfig, nil)
 	if err != nil {
 		return err
 	}

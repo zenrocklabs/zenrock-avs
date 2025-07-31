@@ -20,6 +20,7 @@ require (
 	github.com/urfave/cli v1.22.14
 	go.uber.org/mock v0.4.0
 	golang.org/x/crypto v0.35.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -281,7 +282,6 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 	nhooyr.io/websocket v1.8.17 // indirect
 	pgregory.net/rapid v1.1.0 // indirect

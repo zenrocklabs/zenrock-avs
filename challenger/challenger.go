@@ -5,7 +5,7 @@ import (
 	"context"
 	"math/big"
 
-	ethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/zenrocklabs/zenrock-avs/common"
@@ -18,7 +18,7 @@ import (
 
 type Challenger struct {
 	logger             logging.Logger
-	ethClient          ethclient.Client
+	ethClient          eth.Client
 	avsReader          chainio.AvsReaderer
 	avsWriter          chainio.AvsWriterer
 	avsSubscriber      chainio.AvsSubscriberer
@@ -47,7 +47,7 @@ func NewChallenger(c *config.Config) (*Challenger, error) {
 	}
 
 	challenger := &Challenger{
-		ethClient:          c.EthHttpClient,
+		ethClient:          &c.EthHttpClient,
 		logger:             c.Logger,
 		avsWriter:          avsWriter,
 		avsReader:          avsReader,

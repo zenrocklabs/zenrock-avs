@@ -2,26 +2,22 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"log"
 	"math/big"
 	"os"
+	"time"
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	commonincredible "github.com/Layr-Labs/incredible-squaring-avs/common"
-	"github.com/Layr-Labs/incredible-squaring-avs/core/chainio"
-	"github.com/Layr-Labs/incredible-squaring-avs/types"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/urfave/cli"
+	"github.com/zenrocklabs/zenrock-avs/types"
 )
 
 var (
@@ -84,7 +80,7 @@ func plugin(ctx *cli.Context) {
 	configPath := ctx.GlobalString(ConfigFileFlag.Name)
 
 	avsConfig := types.NodeConfig{}
-	err := commonincredible.ReadYamlConfig(configPath, &avsConfig)
+	err := utils.ReadYamlConfig(configPath, &avsConfig)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -100,31 +96,9 @@ func plugin(ctx *cli.Context) {
 		OperatorStateRetrieverAddr: avsConfig.OperatorStateRetrieverAddress,
 		AvsName:                    "incredible-squaring",
 		PromMetricsIpPortAddress:   avsConfig.EigenMetricsIpPortAddress,
-
-		DontUseAllocationManager: true,
 	}
 	logger, _ := logging.NewZapLogger(logging.Development)
-	ethHttpClient, err := ethclient.Dial(avsConfig.EthRpcUrl)
-	if err != nil {
-		fmt.Println("can't connect to eth client")
-		fmt.Println(err)
-		return
-	}
-	chainID, err := ethHttpClient.ChainID(goCtx)
-	if err != nil {
-		fmt.Println("can't get chain id")
-		fmt.Println(err)
-		return
-	}
-	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{
-		KeystorePath: avsConfig.EcdsaPrivateKeyStorePath,
-		Password:     ecdsaKeyPassword,
-	}, chainID)
-	if err != nil {
-		fmt.Println("can't create signer")
-		fmt.Println(err)
-		return
-	}
+
 	operatorEcdsaPrivateKey, err := sdkecdsa.ReadKey(
 		avsConfig.EcdsaPrivateKeyStorePath,
 		ecdsaKeyPassword,
@@ -135,41 +109,6 @@ func plugin(ctx *cli.Context) {
 	}
 	clients, err := sdkclients.BuildAll(buildClientConfig, operatorEcdsaPrivateKey, logger)
 	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	avsReader, err := chainio.BuildAvsReader(
-		common.HexToAddress(avsConfig.AVSRegistryCoordinatorAddress),
-		common.HexToAddress(avsConfig.OperatorStateRetrieverAddress),
-		ethHttpClient,
-		logger,
-	)
-	if err != nil {
-		fmt.Println("can't create avs reader")
-		fmt.Println(err)
-		return
-	}
-	skWallet, err := wallet.NewPrivateKeyWallet(
-		ethHttpClient,
-		signerV2,
-		common.HexToAddress(avsConfig.OperatorAddress),
-		logger,
-	)
-	if err != nil {
-		fmt.Println("can't create wallet")
-		fmt.Println(err)
-		return
-	}
-	txMgr := txmgr.NewSimpleTxManager(skWallet, ethHttpClient, logger, common.HexToAddress(avsConfig.OperatorAddress))
-	avsWriter, err := chainio.BuildAvsWriter(
-		txMgr,
-		common.HexToAddress(avsConfig.AVSRegistryCoordinatorAddress),
-		common.HexToAddress(avsConfig.OperatorStateRetrieverAddress),
-		ethHttpClient,
-		logger,
-	)
-	if err != nil {
-		fmt.Println("can't create avs reader")
 		fmt.Println(err)
 		return
 	}
@@ -186,64 +125,26 @@ func plugin(ctx *cli.Context) {
 		// Register with registry coordination
 		quorumNumbers := sdktypes.QuorumNums{0}
 		socket := "Not Needed"
-		logger.Infof(
-			"Registering with registry coordination with quorum numbers %v and socket %s",
-			quorumNumbers,
-			socket,
-		)
-		r, err := clients.AvsRegistryChainWriter.RegisterOperator(
+		sigValidForSeconds := int64(1_000_000)
+		operatorToAvsRegistrationSigSalt := [32]byte{}
+		if _, err := rand.Read(operatorToAvsRegistrationSigSalt[:]); err != nil {
+			logger.Errorf("Failed to generate random salt: %v", err)
+			return
+		}
+		operatorToAvsRegistrationSigExpiry := big.NewInt(int64(time.Now().Unix()) + sigValidForSeconds)
+		logger.Infof("Registering with registry coordination with quorum numbers %v and socket %s", quorumNumbers, socket)
+		r, err := clients.AvsRegistryChainWriter.RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 			goCtx,
-			operatorEcdsaPrivateKey,
-			blsKeypair, quorumNumbers, socket, true,
+			operatorEcdsaPrivateKey, operatorToAvsRegistrationSigSalt, operatorToAvsRegistrationSigExpiry,
+			blsKeypair, avsConfig.OperatorValidatorAddress, quorumNumbers, socket,
 		)
 		if err != nil {
-			logger.Errorf("Error assembling CreateNewTask tx")
-			fmt.Println(err)
+			logger.Errorf("Error assembling CreateNewTask tx: %v", err)
 			return
 		}
 		logger.Infof("Registered with registry coordination successfully with tx hash %s", r.TxHash.Hex())
 	} else if operationType == "opt-out" {
 		fmt.Println("Opting out of slashing - unimplemented")
-	} else if operationType == "deposit" {
-		starategyAddrString := ctx.GlobalString(StrategyAddrFlag.Name)
-		if len(starategyAddrString) == 0 {
-			fmt.Println("Strategy address is required for deposit operation")
-			return
-		}
-		strategyAddr := common.HexToAddress(ctx.GlobalString(StrategyAddrFlag.Name))
-		_, tokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(nil, strategyAddr)
-		if err != nil {
-			logger.Error("Failed to fetch strategy contract", "err", err)
-			return
-		}
-		contractErc20Mock, err := avsReader.GetErc20Mock(context.Background(), tokenAddr)
-		if err != nil {
-			logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-			return
-		}
-		txOpts, err := avsWriter.TxMgr.GetNoSendTxOpts()
-		if err != nil {
-			logger.Errorf("Error getting tx opts")
-			return
-		}
-		amount := big.NewInt(1000)
-		tx, err := contractErc20Mock.Mint(txOpts, common.HexToAddress(avsConfig.OperatorAddress), amount)
-		if err != nil {
-			logger.Errorf("Error assembling Mint tx")
-			return
-		}
-		_, err = avsWriter.TxMgr.Send(context.Background(), tx, true)
-		if err != nil {
-			logger.Errorf("Error submitting Mint tx")
-			return
-		}
-
-		_, err = clients.ElChainWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
-		if err != nil {
-			logger.Errorf("Error depositing into strategy")
-			return
-		}
-		return
 	} else {
 		fmt.Println("Invalid operation type")
 	}
