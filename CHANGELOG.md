@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.4...v1.7.0) (2025-08-04)
+
+
+### Features
+
+* generate Go bindings for Zenrock AVS contracts ([d45d046](https://github.com/zenrocklabs/zenrock-avs/commit/d45d046623e0a4ceffb5cd1df1eb29b9fbd8813f))
+
 ## [1.6.4](https://github.com/zenrocklabs/zenrock-avs/compare/v1.6.3...v1.6.4) (2025-04-30)
 
 
