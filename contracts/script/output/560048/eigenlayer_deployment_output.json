@@ -1,0 +1,25 @@
+{
+  "lastUpdated": "v1.6.0-hoodi",
+  "addresses": {
+    "delegationManager": "0x867837a9722C512e0862d8c2E15b8bE220E8b87d",
+    "strategyManager": "0xeE45e76ddbEDdA2918b8C7E3035cd37Eab3b5D41",
+    "eigenPodManager": "0xcd1442415Fc5C29Aa848A49d2e232720BE07976c",
+    "avsDirectory": "0xD58f6844f79eB1fbd9f7091d05f7cb30d3363926",
+    "rewardsCoordinator": "0x29e8572678e0c272350aa0b4B8f304E47EBcd5e7",
+    "allocationManager": "0x95a7431400F362F3647a69535C5666cA0133CAA0",
+    "permissionController": "0xdcCF401fD121d8C542E96BC1d0078884422aFAD2",
+    "strategyFactory": "0xfB7d94501E4d4ACC264833Ef4ede70a11517422B",
+    "strategyBase": "0x6d28cEC1659BC3a9BC814c3EFc1412878B406579",
+    "stETHStrategy": "0xf8a1a66130d614c7360e868576d5e59203475fe0",
+    "wETHStrategy": "0x24579aD4fe83aC53546E5c2D3dF5F85D6383420d",
+    "eigenStrategy": "0xB27b10291DBFE6576d17afF3e251c954Ae14f1D3",
+    "eigenPod": "0x5e1577f8efB21b229cD5Eb4C5Aa3d6C4b228f650",
+    "eigen": "0x8ae2520954db7D80D66835cB71E692835bbA45bf",
+    "backingEigen": "0x6e60888132Cc7e637488379B4B40c42b3751f63a"
+  },
+  "chainInfo": {
+    "chainId": 560048,
+    "deploymentBlock": 1
+  },
+  "notes": "Addresses for EigenLayer v1.6.0 on Hoodi testnet."
+} 

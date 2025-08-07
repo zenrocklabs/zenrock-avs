@@ -1,0 +1,57 @@
+# Hoodi Testnet Configuration for ZenRock AVS
+# Chain ID: 560048
+
+# Network Configuration
+rpc_url: "https://rpc.hoodi.network"
+chain_id: 560048
+network_name: "Hoodi Testnet"
+
+# EigenLayer Contract Addresses (v1.6.0)
+eigenlayer:
+  delegationManager: "0x867837a9722C512e0862d8c2E15b8bE220E8b87d"
+  strategyManager: "0xeE45e76ddbEDdA2918b8C7E3035cd37Eab3b5D41"
+  eigenPodManager: "0xcd1442415Fc5C29Aa848A49d2e232720BE07976c"
+  avsDirectory: "0xD58f6844f79eB1fbd9f7091d05f7cb30d3363926"
+  rewardsCoordinator: "0x29e8572678e0c272350aa0b4B8f304E47EBcd5e7"
+  allocationManager: "0x95a7431400F362F3647a69535C5666cA0133CAA0"
+  permissionController: "0xdcCF401fD121d8C542E96BC1d0078884422aFAD2"
+
+# AVS Contract Addresses (Fresh Deployment)
+avs:
+  taskManager: "0xAD6FBAD259f3D9fCF78B7fdf106B3bB597F9046F"
+  serviceManager: "0xa6c639cC8506B13d7cb37bFa143318908050Fb70"
+  registryCoordinator: "0xc3D4Ac223Ed66f7D97AbbEb9cbE8B7D59A16BF17"
+  operatorStateRetriever: "0xE4E3c9a2125615ec293A91B72A837F9553b7F3c8"
+
+# Strategy Addresses
+strategies:
+  strategyFactory: "0xfB7d94501E4d4ACC264833Ef4ede70a11517422B"
+  strategyBase: "0x6d28cEC1659BC3a9BC814c3EFc1412878B406579"
+  stETHStrategy: "0xf8a1a66130d614c7360e868576d5e59203475fe0"
+  wETHStrategy: "0x24579aD4fe83aC53546E5c2D3dF5F85D6383420d"
+  eigenStrategy: "0xB27b10291DBFE6576d17afF3e251c954Ae14f1D3"
+
+# Token Addresses
+tokens:
+  eigenPod: "0x5e1577f8efB21b229cD5Eb4C5Aa3d6C4b228f650"
+  eigen: "0x8ae2520954db7D80D66835cB71E692835bbA45bf"
+  backingEigen: "0x6e60888132Cc7e637488379B4B40c42b3751f63a"
+
+# Token Strategy Address
+token_strategy_addr: "0xA0119075188e7add0D885a14981B9EF300865D0c"
+
+# Operator Configuration
+operator:
+  # Add your operator private key here
+  private_key: ""
+  # Your operator address
+  address: "0xae0e36b4fbbe872e43e12e18eb832b49603abbb6"
+  
+# AVS Configuration
+avs_config:
+  # Minimum stake required for operators
+  minimumStake: "1000000000000000000" # 1 ETH in wei
+  # Challenge period in seconds
+  challengePeriod: 300
+  # Task generation interval in seconds
+  taskGenerationInterval: 60 

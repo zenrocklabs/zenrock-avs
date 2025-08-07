@@ -7,10 +7,10 @@ help:
 AGGREGATOR_ECDSA_PRIV_KEY=
 CHALLENGER_ECDSA_PRIV_KEY=
 
-CHAINID=17000
+CHAINID=560048
 # Make sure to update this if the strategy address changes
 # check in contracts/script/output/${CHAINID}/credible_squaring_avs_deployment_output.json
-STRATEGY_ADDRESS=0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9
+STRATEGY_ADDRESS=0xA0119075188e7add0D885a14981B9EF300865D0c
 DEPLOYMENT_FILES_DIR=contracts/script/output/${CHAINID}
 
 -----------------------------: ## 
